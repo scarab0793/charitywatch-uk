@@ -1,0 +1,54 @@
+name: Enrich CCEW financial records
+on:
+  workflow_dispatch:
+    inputs:
+      charity_url:
+        description: Official main charity ZIP URL
+        required: true
+        default: https://ccewuksprdoneregsadata1.blob.core.windows.net/data/txt/publicextract.charity.zip
+      history_url:
+        description: Official annual return history ZIP URL (verify exact file from full register page)
+        required: true
+permissions:
+  contents: write
+jobs:
+  enrich:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate URLs and download
+        env:
+          CHARITY_URL: ${{ inputs.charity_url }}
+          HISTORY_URL: ${{ inputs.history_url }}
+        run: |
+          python - <<'PY'
+          import os,urllib.parse
+          for key in ('CHARITY_URL','HISTORY_URL'):
+              u=urllib.parse.urlsplit(os.environ[key])
+              assert u.scheme=='https' and u.hostname=='ccewuksprdoneregsadata1.blob.core.windows.net' and u.path.startswith('/data/txt/') and u.path.endswith('.zip') and not u.username and not u.password
+          PY
+          curl --fail --location --retry 3 --max-time 600 "$CHARITY_URL" -o /tmp/charity.zip
+          curl --fail --location --retry 3 --max-time 600 "$HISTORY_URL" -o /tmp/history.zip
+      - name: Join and validate finances
+        run: |
+          python scripts/enrich_ccew_finances.py --charity-zip /tmp/charity.zip --history-zip /tmp/history.zip --output data
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          m=json.loads(Path('data/manifest-ew.json').read_text())
+          assert m['financial_records']>10000
+          print('Validated financial records:',m['financial_records'])
+          PY
+      - name: Commit verified financial records
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/ew data/manifest-ew.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Enrich CCEW charity financial records"
+            git push
+          fi
