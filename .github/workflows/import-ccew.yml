@@ -92,7 +92,7 @@ jobs:
           PY
       - name: Join government funding and salary band records
         run: |
-          python scripts/enrich_ccew_part_a.py --zip /tmp/parta.zip --output data
+          python scripts/build_salary_shards.py --zip /tmp/parta.zip --output data
           python - <<'PY'
           import json
           from pathlib import Path
@@ -125,7 +125,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/ew data/words/ew data/manifest-ew.json
+          git add data/ew data/words/ew data/pay/ew data/manifest-ew.json
           if ! git diff --cached --quiet; then
             git commit -m "Refresh CCEW charity directory and annual finances"
             git push
