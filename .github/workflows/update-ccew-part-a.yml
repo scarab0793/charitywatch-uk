@@ -5,6 +5,7 @@ on:
       - '.github/workflows/update-ccew-part-a.yml'
       - 'scripts/enrich_ccew_part_a.py'
       - 'scripts/build_salary_shards.py'
+      - 'scripts/verify_salary_shards.py'
   workflow_dispatch:
 permissions:
   contents: write
@@ -48,11 +49,13 @@ jobs:
               f.write(f"### CCEW detailed Part A import\n\nLinked charities: **{count:,}** of **{m['count']:,}**\n\nCharities reporting pay bands: **{m['salary_band_reporting_charities']:,}**\n")
           PY
           cat summary.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Verify every salary shard against manifest
+        run: python scripts/verify_salary_shards.py
       - name: Commit only after validation
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/pay/ew data/manifest-ew.json
+          git add -A data/pay/ew data/manifest-ew.json
           if ! git diff --cached --quiet; then
             git commit -m "Publish verified employee salary bands as separate index"
             git push
