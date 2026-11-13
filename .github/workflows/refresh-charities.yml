@@ -1,0 +1,49 @@
+name: Refresh UK charity directory
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 5 * * 1'
+permissions:
+  contents: write
+concurrency:
+  group: charity-directory-refresh
+  cancel-in-progress: false
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download UK charity register directory
+        run: |
+          curl --fail --location --retry 3 --max-time 180 'https://opencharities.uk/data/charities.csv' -o /tmp/charities.csv
+          test -s /tmp/charities.csv
+      - name: Import charity directory
+        run: python scripts/import_uk_register.py --input /tmp/charities.csv --output data
+      - name: Validate manifests
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          counts=[]
+          for region in ('ew','sc','ni'):
+              p=Path('data')/('manifest-'+region+'.json')
+              m=json.loads(p.read_text())
+              assert m['count']>1000,(region,m['count'])
+              assert all((Path('data')/region/(s+'.json')).exists() for s in m['shards'])
+              counts.append(m['count'])
+          assert sum(counts)>100000,counts
+          print('Validated:',counts)
+          PY
+      - name: Commit directory updates
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data
+          if ! git diff --cached --quiet; then
+            git commit -m "Refresh UK charity directory"
+            git push
+          fi
