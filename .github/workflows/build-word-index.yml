@@ -1,0 +1,40 @@
+name: Build searchable charity word index
+on:
+  push:
+    paths:
+      - '.github/workflows/build-word-index.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: official-ccew-import
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build all-word name index from existing official charity data
+        run: |
+          python scripts/build_word_index.py --data data --region ew
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          m=json.loads(Path('data/manifest-ew.json').read_text())
+          assert m['word_index_records'] >= 100000
+          assert m['word_shards']
+          print('Word index coverage',m['word_index_records'])
+          PY
+      - name: Publish index
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/words/ew data/manifest-ew.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Publish full charity name word index"
+            git push
+          fi
