@@ -84,6 +84,26 @@ const downloadFinancialCSV=record=>{
  const a=document.createElement('a');a.href=url;a.download='charitywatch-'+String(record.number).replace(/[^a-z0-9]/gi,'')+'-finances.csv';document.body.appendChild(a);a.click();a.remove();
  setTimeout(()=>URL.revokeObjectURL(url),1000);
 };
+const salaryBands=[['60001_70000','£60,001–£70,000'],['70001_80000','£70,001–£80,000'],['80001_90000','£80,001–£90,000'],['90001_100000','£90,001–£100,000'],['100001_110000','£100,001–£110,000'],['110001_120000','£110,001–£120,000'],['120001_130000','£120,001–£130,000'],['130001_140000','£130,001–£140,000'],['140001_150000','£140,001–£150,000'],['150001_200000','£150,001–£200,000'],['200001_250000','£200,001–£250,000'],['250001_300000','£250,001–£300,000'],['300001_350000','£300,001–£350,000'],['350001_400000','£350,001–£400,000'],['400001_450000','£400,001–£450,000'],['450001_500000','£450,001–£500,000'],['over_500000','Over £500,000']];
+const salaryReport=record=>{
+ const a=record.annual_return_part_a;
+ const b=record.annual_return_part_b;
+ const bandCounts=a?.salary_bands||{};
+ const known=salaryBands.map(([key,label])=>({key,label,count:bandCounts[key]})).filter(v=>typeof v.count==='number'&&Number.isFinite(v.count));
+ const count=known.length?known.reduce((total,entry)=>total+entry.count,0):null;
+ const highest=known.filter(v=>v.count>0).slice(-1)[0];
+ const employees=typeof b?.count_employees==='number'?b.count_employees:null;
+ const ratio=count!==null&&employees!==null&&employees>0&&a?.period_end===b?.period_end?percent(count/employees*100):'Not calculable';
+ let html='<section id="salary-report"><h3>Pay and staff remuneration</h3>';
+ html+='<div class="profile-metrics">'+profileMetric('Employees in reported pay bands above £60k',count!==null?count.toLocaleString('en-GB'):'Not reported')+profileMetric('Highest reported pay band',highest?highest.label:'Not reported')+profileMetric('Total employees (Part B)',employees!==null?employees.toLocaleString('en-GB'):'Not reported')+profileMetric('Higher-paid employees / staff',ratio)+'</div>';
+ if(!a)return html+'<p class="muted">Detailed salary-band disclosures have not been linked to this charity.</p></section>';
+ html+='<p class="small muted">Source: Charity Commission annual return Part A, period ending '+dateLabel(a.period_end)+'. These are employee counts in disclosed annual pay bands, not exact individual salaries.</p>';
+ if(known.length)html+='<div class="profile-scroll"><table class="profile-table"><thead><tr><th>Annual salary band</th><th>Employees</th></tr></thead><tbody>'+known.map(v=>'<tr><td>'+escapeHTML(v.label)+'</td><td>'+v.count.toLocaleString('en-GB')+'</td></tr>').join('')+'</tbody></table></div>';
+ else html+='<p class="muted">Individual salary-band counts were not reported in the extract.</p>';
+ if(b&&a.period_end!==b.period_end)html+='<p class="profile-warning">Part A pay bands and Part B employee totals cover different financial periods, so their percentage comparison is withheld.</p>';
+ html+='<p class="profile-warning">CEO salary is not separately identified. The highest-paid employee is not necessarily the CEO, and bands cannot establish precise payroll costs.</p>';
+ return html+'</section>';
+};
 const renderProfile=record=>{
  const body=$('profileBody');
  const region=record.jurisdiction?.toLowerCase()||'ew';
@@ -100,7 +120,7 @@ const renderProfile=record=>{
  const siteUrl=new URL(location.href);siteUrl.hash='charity/'+encodeURIComponent(region)+'/'+encodeURIComponent(record.number);
  $('profileTitle').textContent=record.name;
  $('profileMeta').textContent='Registration '+record.number+' · '+record.jurisdiction+' · Latest financial period ending '+(record.year||'not reported');
- body.innerHTML='<div class="profile-actions"><a href="'+escapeHTML(regulator)+'" target="_blank" rel="noopener">Verify in official register</a><button type="button" id="copyProfile">Copy profile link</button><button type="button" id="exportProfileCSV">Export financial CSV</button></div><div class="profile-metrics">'+profileMetric('Annual gross income',money(record.income))+profileMetric('Annual gross expenditure',money(record.expenditure))+profileMetric('Income less expenditure',compare)+'</div>'+financialAnalysis(record,history)+moneyUseBreakdown(record)+'<p class="profile-warning">Income less expenditure is not cash reserves, profit, or a measure of how much reaches beneficiaries. Periods and accounting approaches may vary.</p><h3>Financial history</h3>'+historyHTML+'<h3>Government funding and reporting</h3>'+funding+'<h3>Employees in higher pay bands</h3>'+salary+'<p class="small muted">Salary bands show employee counts, not named CEO remuneration. Charity Commission annual returns may not identify the CEO or grant beneficiaries. Unknown values are not zero.</p><p class="small muted">Source: '+escapeHTML(record.financial_source||'CCEW charity directory')+' · '+(p?'Detailed Part A: CCEW annual return':'No detailed Part A for this record')+'</p>';
+ body.innerHTML='<div class="profile-actions"><a href="'+escapeHTML(regulator)+'" target="_blank" rel="noopener">Verify in official register</a><button type="button" id="copyProfile">Copy profile link</button><button type="button" id="exportProfileCSV">Export financial CSV</button></div><div class="profile-metrics">'+profileMetric('Annual gross income',money(record.income))+profileMetric('Annual gross expenditure',money(record.expenditure))+profileMetric('Income less expenditure',compare)+'</div>'+financialAnalysis(record,history)+moneyUseBreakdown(record)+'<p class="profile-warning">Income less expenditure is not cash reserves, profit, or a measure of how much reaches beneficiaries. Periods and accounting approaches may vary.</p><h3>Financial history</h3>'+historyHTML+'<h3>Government funding and reporting</h3>'+funding+''+salaryReport(record)+'<p class="small muted">Unknown values are not zero. Employee salary bands do not identify named recipients.</p><p class="small muted">Source: '+escapeHTML(record.financial_source||'CCEW charity directory')+' · '+(p?'Detailed Part A: CCEW annual return':'No detailed Part A for this record')+'</p>';
  $('exportProfileCSV').addEventListener('click',()=>downloadFinancialCSV(record));
  $('copyProfile').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(siteUrl.href);$('copyProfile').textContent='Link copied';}catch(_){$('copyProfile').textContent=siteUrl.href;}});
  $('charityProfile').hidden=false;
