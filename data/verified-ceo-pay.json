@@ -45,9 +45,36 @@
           "source_url": "https://www.oxfam.org.uk/documents/1077/Oxfam__GB_Annual_Report_2024-2025.pdf",
           "source_label": "Oxfam GB Annual Report 2024–25, comparative CEO gross pay",
           "page": 88
+        },
+        {
+          "period_end": "2023-03-31",
+          "amount": 125418,
+          "source_url": "https://www.oxfam.org.uk/documents/914/Oxfam_GB_Annual_Report_2023-24.pdf",
+          "source_label": "Oxfam GB Annual Report 2023/24, comparative CEO gross pay",
+          "page": 88
         }
       ],
       "caution": "The table reports gross pay for the CEO role, excluding employer NI and pension. 2023/24 involved a leadership transition; the figure is pay for individuals in the CEO role, not necessarily one person's full-year salary."
+    },
+    "ew:288701": {
+      "name": "WATERAID",
+      "measure": "Chief Executive salary and taxable benefits in kind including employer National Insurance, excluding employer pension contributions",
+      "currency": "GBP",
+      "periods": [
+        {
+          "period_end": "2025-03-31",
+          "amount": 142110,
+          "source_url": "https://www.wateraid.org/uk/about-us/frequently-asked-questions",
+          "source_label": "WaterAid UK FAQ citing 2024/25 annual accounts; pension contributions disclosed separately as £16,124"
+        },
+        {
+          "period_end": "2024-03-31",
+          "amount": 137481,
+          "source_url": "https://www.wateraid.org/uk/about-us/frequently-asked-questions",
+          "source_label": "WaterAid UK FAQ and 2024/25 annual accounts comparative figure; pension contributions £15,975"
+        }
+      ],
+      "caution": "This figure includes employer National Insurance and taxable benefits in kind, unlike gross pay at Oxfam. Employer pension contributions are excluded. WaterAid's later annual reports may contain newer figures."
     }
   }
 }
