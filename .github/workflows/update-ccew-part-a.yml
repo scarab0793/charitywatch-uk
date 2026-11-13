@@ -30,33 +30,76 @@ jobs:
           import zipfile
           assert zipfile.is_zipfile('/tmp/parta.zip'), 'Official Part A ZIP download invalid'
           PY
-      - name: Enrich current registry with details
+      - name: Import salary disclosures with captured diagnostics
+        id: build
+        continue-on-error: true
         run: |
-          python scripts/build_salary_shards.py --zip /tmp/parta.zip --output data
+          set -o pipefail
+          python scripts/build_salary_shards.py --zip /tmp/parta.zip --output data 2>&1 | tee /tmp/part-a-import.log
+      - name: Validate counts and complete pay-index integrity
+        id: validate
+        if: steps.build.outcome == 'success'
+        continue-on-error: true
+        run: |
+          python scripts/verify_salary_shards.py
           python - <<'PY'
-          from pathlib import Path
           import json
+          from pathlib import Path
           m=json.loads(Path('data/manifest-ew.json').read_text())
-          count=m['annual_return_part_a_records']
-          assert 10000<count<=m['count']
-          assert m['annual_return_part_a_aligned_periods']>1000, 'Too few comparable reporting periods'
-          assert m['salary_band_reporting_charities']>100, 'Salary band coverage suspiciously low'
-          print('Detailed Part A coverage:',count,'/',m['count'])
-          print('Matching financial periods:',m['annual_return_part_a_aligned_periods'])
-          print('Charities reporting salary bands:',m['salary_band_reporting_charities'])
-          print('Employees in reported high-pay bands:',m['salary_band_reported_employees_over_60k'])
-          with open(Path.cwd() / 'summary.md','w') as f:
-              f.write(f"### CCEW detailed Part A import\n\nLinked charities: **{count:,}** of **{m['count']:,}**\n\nCharities reporting pay bands: **{m['salary_band_reporting_charities']:,}**\n")
+          assert 10000 < m['annual_return_part_a_records'] <= m['count']
+          assert m['annual_return_part_a_aligned_periods'] > 1000
+          assert m['salary_band_reporting_charities'] > 100
+          print('Pay index validated:',m['annual_return_part_a_records'],'charities')
+          print('Salary-band reporting:',m['salary_band_reporting_charities'],'charities')
           PY
-          cat summary.md >> "$GITHUB_STEP_SUMMARY"
-      - name: Verify every salary shard against manifest
-        run: python scripts/verify_salary_shards.py
-      - name: Commit only after validation
+      - name: Write persistent diagnostic report
+        if: always()
+        env:
+          BUILD_RESULT: ${{ steps.build.outcome }}
+          VALIDATE_RESULT: ${{ steps.validate.outcome }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          python - <<'PY'
+          import datetime,json,os
+          from pathlib import Path
+          log=Path('/tmp/part-a-import.log')
+          lines=log.read_text(errors='replace').splitlines()[-35:] if log.exists() else ['Importer did not start (check download step).']
+          ok=os.environ['BUILD_RESULT']=='success' and os.environ['VALIDATE_RESULT']=='success'
+          report={'status':'success' if ok else 'failed','run_id':os.environ['RUN_ID'],
+            'run_url':os.environ['RUN_URL'],'timestamp_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            'build_result':os.environ['BUILD_RESULT'],'validate_result':os.environ['VALIDATE_RESULT'],
+            'import_log_tail':lines}
+          if ok:
+            m=json.loads(Path('data/manifest-ew.json').read_text())
+            for key in ('annual_return_part_a_records','annual_return_part_a_aligned_periods','salary_band_reporting_charities','salary_band_reported_employees_over_60k'):
+              report[key]=m.get(key)
+          target=Path('data/diagnostics/latest-part-a.json')
+          target.parent.mkdir(parents=True,exist_ok=True)
+          target.write_text(json.dumps(report,indent=2),encoding='utf-8')
+          print('Saved persistent import diagnostics:',report['status'])
+          PY
+      - name: Publish diagnostic report and valid salary data
+        if: always()
+        env:
+          BUILD_RESULT: ${{ steps.build.outcome }}
+          VALIDATE_RESULT: ${{ steps.validate.outcome }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A data/pay/ew data/manifest-ew.json
+          git add data/diagnostics/latest-part-a.json
+          if [ "$BUILD_RESULT" = success ] && [ "$VALIDATE_RESULT" = success ]; then
+            git add -A data/pay/ew data/manifest-ew.json
+          fi
           if ! git diff --cached --quiet; then
-            git commit -m "Publish verified employee salary bands as separate index"
+            git commit -m "Record Part A salary import outcome"
             git push
           fi
+      - name: Fail workflow if data was not validated
+        if: always()
+        env:
+          BUILD_RESULT: ${{ steps.build.outcome }}
+          VALIDATE_RESULT: ${{ steps.validate.outcome }}
+        run: |
+          test "$BUILD_RESULT" = success
+          test "$VALIDATE_RESULT" = success
