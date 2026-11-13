@@ -35,9 +35,14 @@ def money(value):
  except ValueError:return None
 def date(value):
  value=str(value or '').strip()
- if not re.match(r'^\\d{4}-\\d{2}-\\d{2}',value):return None
- try:return datetime.date.fromisoformat(value[:10]).isoformat()
- except ValueError:return None
+ if not value:return None
+ for fmt in ('%Y-%m-%d','%Y-%m-%d %H:%M:%S','%d/%m/%Y','%d-%m-%Y','%Y/%m/%d'):
+  try:return datetime.datetime.strptime(value,fmt).date().isoformat()
+  except ValueError:pass
+ if len(value)>=10:
+  try:return datetime.date.fromisoformat(value[:10]).isoformat()
+  except ValueError:pass
+ return None
 def run(charity_zip,history_zip,out):
  z,stream,rows,headers=read_zip(charity_zip)
  org=field(headers,'organisation_number')
@@ -57,17 +62,26 @@ def run(charity_zip,history_zip,out):
  if not all((org,income,expense,period)):
   raise ValueError('Unknown annual history schema: '+', '.join(headers.values()))
  latest={};years=defaultdict(dict)
+ counts={'rows':0,'matched_org':0,'valid_date':0,'valid_money':0}
+ sample_dates=[]
  for row in rows:
+  counts['rows']+=1
   registered=mapping.get((row.get(org) or '').strip())
   if not registered:continue
-  d=date(row.get(period))
+  counts['matched_org']+=1
+  raw_date=row.get(period)
+  if len(sample_dates)<4 and raw_date and raw_date not in sample_dates:sample_dates.append(raw_date)
+  d=date(raw_date)
   if not d:continue
+  counts['valid_date']+=1
   inc=money(row.get(income));exp=money(row.get(expense))
   if inc is None and exp is None:continue
+  counts['valid_money']+=1
   item={'year':d,'income':inc,'expenditure':exp}
   years[registered][d]=item
   if registered not in latest or d>latest[registered]['year']:latest[registered]=item
  stream.close();z.close()
+ print('Import diagnostics:',counts,'unique charities:',len(latest),'sample date formats:',sample_dates,flush=True)
  if len(latest)<10000:raise ValueError('Too few financial records; refusing publication')
  # Stage every changed file before replacing any published data.
  staged=[]
