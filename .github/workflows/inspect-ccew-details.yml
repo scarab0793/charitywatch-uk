@@ -1,0 +1,42 @@
+name: Inspect detailed CCEW annual return fields
+on:
+  workflow_dispatch:
+    inputs:
+      archive_url:
+        description: Official CCEW detailed annual return ZIP to inspect
+        required: true
+        default: https://ccewuksprdoneregsadata1.blob.core.windows.net/data/txt/publicextract.charity_annual_return_parta.zip
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Validate official URL and download
+        env:
+          ARCHIVE_URL: ${{ inputs.archive_url }}
+        run: |
+          python - <<'PY'
+          import os,urllib.parse
+          u=urllib.parse.urlsplit(os.environ['ARCHIVE_URL'])
+          assert u.scheme=='https' and u.hostname=='ccewuksprdoneregsadata1.blob.core.windows.net'
+          assert u.path.startswith('/data/txt/publicextract.') and u.path.endswith('.zip')
+          assert not u.username and not u.password
+          PY
+          curl --fail --location --retry 3 --max-time 600 --max-filesize 500000000 "$ARCHIVE_URL" -o /tmp/detail.zip
+      - name: Print schemas only (no individual charity data)
+        run: |
+          python - <<'PY'
+          import csv,io,zipfile
+          with zipfile.ZipFile('/tmp/detail.zip') as z:
+              names=[n for n in z.namelist() if n.lower().endswith(('.txt','.csv'))]
+              if not names:raise ValueError('No text table in official archive')
+              for name in names:
+                  with z.open(name) as f:
+                      first=f.readline().decode('utf-8-sig',errors='replace')
+                  delimiter='\t' if first.count('\t')>=first.count(',') else ','
+                  columns=next(csv.reader([first],delimiter=delimiter))
+                  print('TABLE:',name,'COLUMN COUNT:',len(columns))
+                  for col in columns:print('FIELD:',repr(col))
+          PY
