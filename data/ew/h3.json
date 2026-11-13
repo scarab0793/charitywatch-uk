@@ -1,1 +1,1 @@
-[{"name":"H3O AID","number":"1201853","jurisdiction":"EW","income":6320.0,"expenditure":14576.0,"year":"2025-12-31","ceo_pay":null,"grants":null,"financial_source":"CCEW annual return history"}]
+[{"name":"H3O AID","number":"1201853","jurisdiction":"EW","income":6320.0,"expenditure":14576.0,"year":"2025-12-31","ceo_pay":null,"grants":null,"history":[{"year":"2025-12-31","income":6320.0,"expenditure":14576.0},{"year":"2024-12-31","income":20422.0,"expenditure":10515.0},{"year":"2023-12-31","income":322.0,"expenditure":0.0}],"financial_source":"CCEW annual return history"}]

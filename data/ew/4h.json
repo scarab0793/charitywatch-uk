@@ -1,1 +1,1 @@
-[{"name":"4 HUMANITY","number":"1201571","jurisdiction":"EW","income":0.0,"expenditure":3445.0,"year":"2025-03-31","ceo_pay":null,"grants":null,"financial_source":"CCEW annual return history"}]
+[{"name":"4 HUMANITY","number":"1201571","jurisdiction":"EW","income":0.0,"expenditure":3445.0,"year":"2025-03-31","ceo_pay":null,"grants":null,"history":[{"year":"2025-03-31","income":0.0,"expenditure":3445.0},{"year":"2024-03-31","income":18637.0,"expenditure":12924.0}],"financial_source":"CCEW annual return history"}]

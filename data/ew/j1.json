@@ -1,1 +1,1 @@
-[{"name":"J1010","number":"1145014","jurisdiction":"EW","income":6250.0,"expenditure":6000.0,"year":"2020-03-31","ceo_pay":null,"grants":null,"financial_source":"CCEW annual return history"}]
+[{"name":"J1010","number":"1145014","jurisdiction":"EW","income":6250.0,"expenditure":6000.0,"year":"2020-03-31","ceo_pay":null,"grants":null,"history":[{"year":"2020-03-31","income":6250.0,"expenditure":6000.0},{"year":"2019-03-31","income":5259.0,"expenditure":5100.0}],"financial_source":"CCEW annual return history"}]

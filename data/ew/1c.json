@@ -1,1 +1,1 @@
-[{"name":"1 COMPASS","number":"1203257","jurisdiction":"EW","income":83928.0,"expenditure":48081.0,"year":"2025-04-05","ceo_pay":null,"grants":null,"financial_source":"CCEW annual return history"}]
+[{"name":"1 COMPASS","number":"1203257","jurisdiction":"EW","income":83928.0,"expenditure":48081.0,"year":"2025-04-05","ceo_pay":null,"grants":null,"history":[{"year":"2025-04-05","income":83928.0,"expenditure":48081.0},{"year":"2024-04-05","income":1002.0,"expenditure":493.0}],"financial_source":"CCEW annual return history"}]

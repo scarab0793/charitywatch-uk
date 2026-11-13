@@ -921,10 +921,11 @@
   "source_url": "https://register-of-charities.charitycommission.gov.uk/en/register/full-register-download",
   "source_archive": "charities.zip",
   "sha256": "cbe4ba2b4c24ad853a6f0c3f6139e0def9982958d009b275b3afb60535ec37d6",
-  "generated_utc": "2026-11-13T14:55:55.874089+00:00",
+  "generated_utc": "2026-11-13T18:04:53.513882+00:00",
   "note": "Figures are published only if clearly labelled in the main charity extract; otherwise null. Annual return join not yet implemented.",
   "financial_records": 245325,
+  "history_years_max": 5,
   "financial_source": "CCEW charity_annual_return_history",
-  "financial_updated_utc": "2026-11-13T15:09:16.208360+00:00",
+  "financial_updated_utc": "2026-11-13T18:05:28.051651+00:00",
   "history_sha256": "366d97c0219b4d3d299e6d0c89e0a097259d55c2cb37b8c911dd06677e992b25"
 }

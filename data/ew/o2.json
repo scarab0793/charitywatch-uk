@@ -1,1 +1,1 @@
-[{"name":"O2C","number":"1090122","jurisdiction":"EW","income":7000.0,"expenditure":7345.0,"year":"2008-12-31","ceo_pay":null,"grants":null,"financial_source":"CCEW annual return history"}]
+[{"name":"O2C","number":"1090122","jurisdiction":"EW","income":7000.0,"expenditure":7345.0,"year":"2008-12-31","ceo_pay":null,"grants":null,"history":[{"year":"2008-12-31","income":7000.0,"expenditure":7345.0},{"year":"2007-12-31","income":7000.0,"expenditure":7542.0}],"financial_source":"CCEW annual return history"}]

@@ -1,1 +1,1 @@
-[{"name":"ZCNBG","number":"1209576","jurisdiction":"EW","income":4193.0,"expenditure":2719.0,"year":"2025-09-30","ceo_pay":null,"grants":null,"financial_source":"CCEW annual return history"}]
+[{"name":"ZCNBG","number":"1209576","jurisdiction":"EW","income":4193.0,"expenditure":2719.0,"year":"2025-09-30","ceo_pay":null,"grants":null,"history":[{"year":"2025-09-30","income":4193.0,"expenditure":2719.0}],"financial_source":"CCEW annual return history"}]

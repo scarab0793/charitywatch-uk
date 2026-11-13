@@ -1,1 +1,1 @@
-[{"name":"5 GIRLS IN A BOAT","number":"1105722","jurisdiction":"EW","income":6168.0,"expenditure":3764.0,"year":"2006-09-30","ceo_pay":null,"grants":null,"financial_source":"CCEW annual return history"}]
+[{"name":"5 GIRLS IN A BOAT","number":"1105722","jurisdiction":"EW","income":6168.0,"expenditure":3764.0,"year":"2006-09-30","ceo_pay":null,"grants":null,"history":[{"year":"2006-09-30","income":6168.0,"expenditure":3764.0},{"year":"2005-09-30","income":18995.0,"expenditure":16950.0}],"financial_source":"CCEW annual return history"}]
