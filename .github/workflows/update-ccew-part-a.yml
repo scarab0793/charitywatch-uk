@@ -38,10 +38,13 @@ jobs:
           count=m['annual_return_part_a_records']
           assert 10000<count<=m['count']
           assert m['annual_return_part_a_aligned_periods']>1000, 'Too few comparable reporting periods'
+          assert m['salary_band_reporting_charities']>100, 'Salary band coverage suspiciously low'
           print('Detailed Part A coverage:',count,'/',m['count'])
           print('Matching financial periods:',m['annual_return_part_a_aligned_periods'])
+          print('Charities reporting salary bands:',m['salary_band_reporting_charities'])
+          print('Employees in reported high-pay bands:',m['salary_band_reported_employees_over_60k'])
           with open(Path.cwd() / 'summary.md','w') as f:
-              f.write(f"### CCEW detailed Part A import\n\nLinked charities: **{count:,}** of **{m['count']:,}**\n")
+              f.write(f"### CCEW detailed Part A import\n\nLinked charities: **{count:,}** of **{m['count']:,}**\n\nCharities reporting pay bands: **{m['salary_band_reporting_charities']:,}**\n")
           PY
           cat summary.md >> "$GITHUB_STEP_SUMMARY"
       - name: Commit only after validation
