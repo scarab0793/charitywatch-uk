@@ -31,7 +31,10 @@ const renderComparison=()=>{
   const periodNote=ceoLatest?'CEO remuneration period: '+ceoLatest.period_end+' · '+(ceo.measure||'Reported remuneration'):'No independently verified CEO amount in our catalogue';
   const link=ceoLatest?'<a href="'+escapeHTML(ceoLatest.source_url)+'" target="_blank" rel="noopener">CEO pay primary source</a>':'';
   const staff=salaryCount!==null?salaryCount.toLocaleString('en-GB')+' employees':'Not reported';
-  return '<div class="card"><b>'+escapeHTML(x.name)+'</b><p class="small muted">'+escapeHTML(x.number)+' · Financial period end: '+escapeHTML(x.year||'Not reported')+'</p><p>Gross income: <strong>'+money(x.income)+'</strong></p><p>Gross expenditure: <strong>'+money(x.expenditure)+'</strong></p><p>Income less expenditure: <strong>'+(typeof x.income==='number'&&typeof x.expenditure==='number'?money(x.income-x.expenditure):'Not reported')+'</strong></p><p>CEO remuneration: <strong>'+ceoValue+'</strong></p><p class="small muted">'+escapeHTML(periodNote)+'</p>'+link+'<p>Employees in reported salary bands over £60k: <strong>'+staff+'</strong></p><p class="small muted">Salary band period end: '+escapeHTML(pay?.period_end||'Not available')+'</p><button type="button" data-remove="'+escapeHTML(x.number)+'">Remove</button></div>';
+  const matchedDate=ceoLatest&&String(ceoLatest.period_end)===String(x.year);
+  const ceoRatio=matchedDate&&typeof x.income==='number'&&x.income>0?percent(ceoLatest.amount/x.income*100):'Not calculable';
+  const ratioNote=matchedDate?'Same reporting period':'Reporting periods differ or are unavailable';
+  return '<div class="card"><b>'+escapeHTML(x.name)+'</b><p class="small muted">'+escapeHTML(x.number)+' · Financial period end: '+escapeHTML(x.year||'Not reported')+'</p><p>Gross income: <strong>'+money(x.income)+'</strong></p><p>Gross expenditure: <strong>'+money(x.expenditure)+'</strong></p><p>Income less expenditure: <strong>'+(typeof x.income==='number'&&typeof x.expenditure==='number'?money(x.income-x.expenditure):'Not reported')+'</strong></p><p>CEO remuneration: <strong>'+ceoValue+'</strong></p><p class="small muted">'+escapeHTML(periodNote)+'</p>'+link+'<p>CEO remuneration / gross income: <strong>'+ceoRatio+'</strong></p><p class="small muted">'+escapeHTML(ratioNote)+'</p><p>Employees in reported salary bands over £60k: <strong>'+staff+'</strong></p><p class="small muted">Salary band period end: '+escapeHTML(pay?.period_end||'Not available')+'</p><button type="button" data-remove="'+escapeHTML(x.number)+'">Remove</button></div>';
  };
  el.innerHTML='<div class="cards">'+arr.map(card).join('')+'</div><p class="small muted">CEO remuneration figures may be gross pay, emoluments or include different benefits. They are not directly comparable without checking the original accounts. Reporting periods may differ. Income less expenditure is not cash reserves or an efficiency score. Salary bands show employee counts, not named CEO pay.</p>';
 };
@@ -137,6 +140,24 @@ const loadVerifiedPayList=async()=>{
 };
 $('ceoPaySearch').addEventListener('input',renderVerifiedPayList);
 $('ceoPaySort').addEventListener('change',renderVerifiedPayList);
+const comparableFinance=record=>{
+ const rows=Array.isArray(record.history)?record.history:[];
+ const map=new Map();
+ for(const v of rows){const date=String(v.year||'').slice(0,10);if(date&&!map.has(date))map.set(date,v);}
+ const end=String(record.year||'').slice(0,10);
+ if(end&&!map.has(end))map.set(end,{year:end,income:record.income,expenditure:record.expenditure});
+ return map;
+};
+const verifiedCEOAnalysis=(record,entry)=>{
+ const years=[...(entry.periods||[])].sort((a,b)=>String(b.period_end).localeCompare(String(a.period_end)));
+ const current=years[0],previous=years[1];
+ const finance=comparableFinance(record);
+ const match=years.map(pay=>({pay,income:finance.get(pay.period_end)?.income})).find(x=>typeof x.income==='number'&&x.income>0);
+ const ratio=match?match.pay.amount/match.income*100:null;
+ const change=previous&&previous.amount>0?(current.amount-previous.amount)/previous.amount*100:null;
+ const rate=change===null?'Not calculable':(change>=0?'+':'')+percent(change);
+ return '<div class="profile-metrics">'+profileMetric('Latest verified CEO remuneration',money(current.amount))+profileMetric('Remuneration change from prior disclosure',rate)+profileMetric('CEO remuneration / gross income',ratio===null?'Not calculable':percent(ratio))+'</div><p class="small muted">'+escapeHTML(match?'CEO remuneration and gross income both relate to period ending '+match.pay.period_end+'.':'No matching annual-income period could be confirmed. The percentage is withheld.')+(previous?' Previous remuneration period ending '+escapeHTML(previous.period_end)+'.':'')+' Changes are nominal and do not account for inflation, role transitions or differing pay definitions.</p>';
+};
 const independentlyVerifiedPay=async record=>{
  const region=record.jurisdiction?.toLowerCase()||'ew';
  try{
@@ -144,7 +165,7 @@ const independentlyVerifiedPay=async record=>{
   const entry=source.records?.[region+':'+record.number];
   if(!entry?.periods?.length)return '<p class="small muted">No individually verified chief executive pay figure has been added to our source library for this charity yet. This does not mean the information is unpublished.</p>';
   const years=[...entry.periods].sort((a,b)=>String(b.period_end).localeCompare(String(a.period_end)));
-  return '<div class="profile-metrics">'+profileMetric('Latest verified CEO remuneration',money(years[0].amount))+profileMetric('Reporting period end',years[0].period_end)+'</div><div class="profile-scroll"><table class="profile-table"><thead><tr><th>Financial period end</th><th>Reported remuneration</th><th>Source</th></tr></thead><tbody>'+years.map(y=>'<tr><td>'+escapeHTML(y.period_end)+'</td><td>'+money(y.amount)+'</td><td><a href="'+escapeHTML(y.source_url)+'" target="_blank" rel="noopener">Annual report</a></td></tr>').join('')+'</tbody></table></div><p class="small muted">'+escapeHTML(entry.measure||'Chief Executive remuneration')+'. '+escapeHTML(entry.caution||'Amounts as reported in accounts; definitions may vary.')+'</p>';
+  return verifiedCEOAnalysis(record,entry)+'<div class="profile-scroll"><table class="profile-table"><thead><tr><th>Financial period end</th><th>Reported remuneration</th><th>Source</th></tr></thead><tbody>'+years.map(y=>'<tr><td>'+escapeHTML(y.period_end)+'</td><td>'+money(y.amount)+'</td><td><a href="'+escapeHTML(y.source_url)+'" target="_blank" rel="noopener">Annual report</a></td></tr>').join('')+'</tbody></table></div><p class="small muted">'+escapeHTML(entry.measure||'Chief Executive remuneration')+'. '+escapeHTML(entry.caution||'Amounts as reported in accounts; definitions may vary.')+'</p>';
  }catch(_){return '<p class="muted">Independently verified salary records are currently unavailable.</p>';}
 };
 const salaryReport=record=>{
