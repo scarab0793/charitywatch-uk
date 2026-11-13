@@ -26,6 +26,28 @@
         }
       ],
       "caution": "The accounts disclose a role-level amount; these figures alone do not establish the name of the pay recipient or separate employer pension contributions."
+    },
+    "ew:202918": {
+      "name": "OXFAM",
+      "measure": "Gross pay in the Chief Executive Officer role (excluding employer National Insurance and employer pension contributions)",
+      "currency": "GBP",
+      "periods": [
+        {
+          "period_end": "2025-03-31",
+          "amount": 135799,
+          "source_url": "https://www.oxfam.org.uk/documents/1077/Oxfam__GB_Annual_Report_2024-2025.pdf",
+          "source_label": "Oxfam GB Annual Report 2024–25, key management personnel table",
+          "page": 88
+        },
+        {
+          "period_end": "2024-03-31",
+          "amount": 127346,
+          "source_url": "https://www.oxfam.org.uk/documents/1077/Oxfam__GB_Annual_Report_2024-2025.pdf",
+          "source_label": "Oxfam GB Annual Report 2024–25, comparative CEO gross pay",
+          "page": 88
+        }
+      ],
+      "caution": "The table reports gross pay for the CEO role, excluding employer NI and pension. 2023/24 involved a leadership transition; the figure is pay for individuals in the CEO role, not necessarily one person's full-year salary."
     }
   }
 }
