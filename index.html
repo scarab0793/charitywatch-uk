@@ -23,6 +23,35 @@ const profileKey=(region,number)=>'#charity/'+encodeURIComponent(region)+'/'+enc
 const profileFlag=value=>value===true?'Yes':value===false?'No':'Not reported';
 const profileMetric=(label,value)=>'<div class="metric"><div class="small muted">'+escapeHTML(label)+'</div><div class="value">'+escapeHTML(value)+'</div></div>';
 const dateLabel=value=>value?escapeHTML(value):'Not reported';
+const financeNumber=value=>typeof value==='number'&&Number.isFinite(value)?value:null;
+const percent=value=>Number.isFinite(value)?new Intl.NumberFormat('en-GB',{maximumFractionDigits:1}).format(value)+'%':'Not calculable';
+const financialAnalysis=(record,periods)=>{
+ const income=financeNumber(record.income),spending=financeNumber(record.expenditure);
+ const spendingRatio=income!==null&&income>0&&spending!==null?spending/income*100:null;
+ const previous=periods.filter(v=>v.year&&v.year!==record.year).sort((a,b)=>String(b.year).localeCompare(String(a.year)))[0];
+ const change=(current,prior)=>current!==null&&prior!==null&&prior!==0?(current-prior)/Math.abs(prior)*100:null;
+ const previousIncome=previous?financeNumber(previous.income):null;
+ const previousSpending=previous?financeNumber(previous.expenditure):null;
+ const incChange=change(income,previousIncome);
+ const expChange=change(spending,previousSpending);
+ let tiles=profileMetric('Expenditure / income',spendingRatio!==null?percent(spendingRatio):'Not calculable');
+ tiles+=profileMetric('Income change',incChange!==null?percent(incChange):'Not calculable');
+ tiles+=profileMetric('Expenditure change',expChange!==null?percent(expChange):'Not calculable');
+ let note='Expenditure / income uses reported totals, not programme spending or grant distribution. Ratios above 100% are possible.';
+ if(previous)note+=' Changes compare the period ending '+String(record.year||'unknown')+' with '+String(previous.year)+', without adjusting for inflation, different period lengths, or extraordinary transactions.';
+ else note+=' A prior reporting period is needed to calculate year-on-year changes.';
+ return '<h3>Financial indicators</h3><div class="profile-metrics">'+tiles+'</div><p class="small muted">'+escapeHTML(note)+'</p>';
+};
+const csvCell=value=>'"'+String(value??'').replace(/"/g,'""')+'"';
+const downloadFinancialCSV=record=>{
+ const periods=Array.isArray(record.history)&&record.history.length?record.history:[{year:record.year,income:record.income,expenditure:record.expenditure}];
+ const lines=[['Charity name','Registration number','Period end','Gross income GBP','Gross expenditure GBP','Source'],...periods.map(p=>[record.name,record.number,p.year,p.income,p.expenditure,record.financial_source||'CCEW charity register'])];
+ const csv='\uFEFF'+lines.map(row=>row.map(csvCell).join(',')).join('\r\n');
+ const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement('a');a.href=url;a.download='charitywatch-'+String(record.number).replace(/[^a-z0-9]/gi,'')+'-finances.csv';document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
 const renderProfile=record=>{
  const body=$('profileBody');
  const region=record.jurisdiction?.toLowerCase()||'ew';
@@ -39,7 +68,8 @@ const renderProfile=record=>{
  const siteUrl=new URL(location.href);siteUrl.hash='charity/'+encodeURIComponent(region)+'/'+encodeURIComponent(record.number);
  $('profileTitle').textContent=record.name;
  $('profileMeta').textContent='Registration '+record.number+' · '+record.jurisdiction+' · Latest financial period ending '+(record.year||'not reported');
- body.innerHTML='<div class="profile-actions"><a href="'+escapeHTML(regulator)+'" target="_blank" rel="noopener">Verify in official register</a><button type="button" id="copyProfile">Copy profile link</button></div><div class="profile-metrics">'+profileMetric('Annual gross income',money(record.income))+profileMetric('Annual gross expenditure',money(record.expenditure))+profileMetric('Income less expenditure',compare)+'</div><p class="profile-warning">Income less expenditure is not cash reserves, profit, or a measure of how much reaches beneficiaries. Periods and accounting approaches may vary.</p><h3>Financial history</h3>'+historyHTML+'<h3>Government funding and reporting</h3>'+funding+'<h3>Employees in higher pay bands</h3>'+salary+'<p class="small muted">Salary bands show employee counts, not named CEO remuneration. Charity Commission annual returns may not identify the CEO or grant beneficiaries. Unknown values are not zero.</p><p class="small muted">Source: '+escapeHTML(record.financial_source||'CCEW charity directory')+' · '+(p?'Detailed Part A: CCEW annual return':'No detailed Part A for this record')+'</p>';
+ body.innerHTML='<div class="profile-actions"><a href="'+escapeHTML(regulator)+'" target="_blank" rel="noopener">Verify in official register</a><button type="button" id="copyProfile">Copy profile link</button><button type="button" id="exportProfileCSV">Export financial CSV</button></div><div class="profile-metrics">'+profileMetric('Annual gross income',money(record.income))+profileMetric('Annual gross expenditure',money(record.expenditure))+profileMetric('Income less expenditure',compare)+'</div>'+financialAnalysis(record,history)+'<p class="profile-warning">Income less expenditure is not cash reserves, profit, or a measure of how much reaches beneficiaries. Periods and accounting approaches may vary.</p><h3>Financial history</h3>'+historyHTML+'<h3>Government funding and reporting</h3>'+funding+'<h3>Employees in higher pay bands</h3>'+salary+'<p class="small muted">Salary bands show employee counts, not named CEO remuneration. Charity Commission annual returns may not identify the CEO or grant beneficiaries. Unknown values are not zero.</p><p class="small muted">Source: '+escapeHTML(record.financial_source||'CCEW charity directory')+' · '+(p?'Detailed Part A: CCEW annual return':'No detailed Part A for this record')+'</p>';
+ $('exportProfileCSV').addEventListener('click',()=>downloadFinancialCSV(record));
  $('copyProfile').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(siteUrl.href);$('copyProfile').textContent='Link copied';}catch(_){$('copyProfile').textContent=siteUrl.href;}});
  $('charityProfile').hidden=false;
  $('charityProfile').scrollIntoView({behavior:'smooth',block:'start'});
