@@ -126,6 +126,8 @@ def import_details(archive, data_dir):
     staged = []
     matched_numbers = set()
     aligned_numbers = set()
+    disclosed_band_numbers = set()
+    over_60k_employee_count = 0
     for folder in (data_dir / "ew", data_dir / "ew" / "numbers"):
         if not folder.is_dir():
             raise ValueError("Missing imported folder: " + str(folder))
@@ -140,6 +142,10 @@ def import_details(archive, data_dir):
                 if details:
                     record["annual_return_part_a"] = details
                     matched_numbers.add(number)
+                    bands = details.get("salary_bands", {})
+                    if number not in disclosed_band_numbers and any(isinstance(v, int) for v in bands.values()):
+                        disclosed_band_numbers.add(number)
+                        over_60k_employee_count += sum(v for v in bands.values() if isinstance(v, int))
                     if period and period == details["period_end"]:
                         aligned_numbers.add(number)
                 else:
@@ -150,6 +156,8 @@ def import_details(archive, data_dir):
         raise ValueError("Too few linked records; declining to write")
     manifest["annual_return_part_a_records"] = len(matched_numbers)
     manifest["annual_return_part_a_aligned_periods"] = len(aligned_numbers)
+    manifest["salary_band_reporting_charities"] = len(disclosed_band_numbers)
+    manifest["salary_band_reported_employees_over_60k"] = over_60k_employee_count
     manifest["annual_return_part_a_source"] = "CCEW publicextract.charity_annual_return_parta.zip"
     manifest["annual_return_part_a_updated_utc"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
@@ -160,6 +168,8 @@ def import_details(archive, data_dir):
     print("Part A organisations found:", len(by_number))
     print("Charities successfully linked:", len(matched_numbers))
     print("Matching reporting periods:", len(aligned_numbers))
+    print("Charities disclosing salary-band counts:", len(disclosed_band_numbers))
+    print("Employees in disclosed bands above GBP 60,000:", over_60k_employee_count)
 
 
 if __name__ == "__main__":
