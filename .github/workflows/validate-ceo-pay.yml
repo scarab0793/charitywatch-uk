@@ -1,0 +1,24 @@
+name: Validate sourced chief executive pay
+on:
+  push:
+    paths:
+      - 'data/verified-ceo-pay.json'
+      - 'scripts/validate_ceo_pay.py'
+      - '.github/workflows/validate-ceo-pay.yml'
+  pull_request:
+    paths:
+      - 'data/verified-ceo-pay.json'
+      - 'scripts/validate_ceo_pay.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate sources, periods, amounts and duplicates
+        run: python scripts/validate_ceo_pay.py
