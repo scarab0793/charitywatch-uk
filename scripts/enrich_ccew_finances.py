@@ -83,6 +83,8 @@ def run(charity_zip,history_zip,out):
  stream.close();z.close()
  print('Import diagnostics:',counts,'unique charities:',len(latest),'sample date formats:',sample_dates,flush=True)
  if len(latest)<10000:raise ValueError('Too few financial records; refusing publication')
+ histories={reg:sorted(periods.values(),key=lambda x:x['year'],reverse=True)[:5] for reg,periods in years.items()}
+ del years
  # Stage every changed file before replacing any published data.
  staged=[]
  updated=0
@@ -94,12 +96,14 @@ def run(charity_zip,history_zip,out):
     fin=latest.get(str(item['number']))
     if fin:
      item.update(fin)
+     item['history']=histories.get(str(item['number']),[])
      item['financial_source']='CCEW annual return history'
      updated+=1
    staged.append((file,json.dumps(items,ensure_ascii=False,separators=(',',':'))))
  manifest=out/'manifest-ew.json'
  meta=json.loads(manifest.read_text())
  meta['financial_records']=len(latest)
+ meta['history_years_max']=5
  meta['financial_source']='CCEW charity_annual_return_history'
  meta['financial_updated_utc']=datetime.datetime.now(datetime.timezone.utc).isoformat()
  meta['history_sha256']=hashlib.sha256(history_zip.read_bytes()).hexdigest()
