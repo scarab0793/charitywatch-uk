@@ -1,0 +1,43 @@
+name: Inspect CCEW annual return schema
+on:
+  workflow_dispatch:
+    inputs:
+      history_url:
+        description: Official annual return history ZIP URL
+        required: false
+        default: https://ccewuksprdoneregsadata1.blob.core.windows.net/data/txt/publicextract.charity_annual_return_history.zip
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate URL and download
+        env:
+          HISTORY_URL: ${{ inputs.history_url }}
+        run: |
+          python - <<'PY'
+          import os,urllib.parse
+          u=urllib.parse.urlsplit(os.environ['HISTORY_URL'])
+          assert u.scheme=='https' and u.hostname=='ccewuksprdoneregsadata1.blob.core.windows.net'
+          assert u.path.startswith('/data/txt/') and u.path.endswith('.zip')
+          assert not u.username and not u.password
+          PY
+          curl --fail --location --retry 3 --max-time 600 "$HISTORY_URL" -o /tmp/history.zip
+      - name: Inspect ZIP metadata and field names (no charity data logged)
+        run: |
+          python - <<'PY'
+          import csv,io,zipfile
+          csv.field_size_limit(100000000)
+          with zipfile.ZipFile('/tmp/history.zip') as z:
+              names=[x for x in z.namelist() if x.lower().endswith('.txt')]
+              print('TXT files:',names)
+              for name in names:
+                  with z.open(name) as f:
+                      reader=csv.reader(io.TextIOWrapper(f,encoding='utf-8-sig',errors='replace'),delimiter='\t')
+                      headers=next(reader)
+                      print('File:',name,'Column count:',len(headers))
+                      for h in headers:print('FIELD:',repr(h))
+          PY
