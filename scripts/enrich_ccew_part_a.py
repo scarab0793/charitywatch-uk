@@ -97,6 +97,7 @@ def import_details(archive, data_dir):
             if missing:
                 raise ValueError("Official Part A schema has changed: " + ", ".join(sorted(missing)))
             by_number = {}
+            by_period = {}
             raw_rows = 0
             for row in reader:
                 raw_rows += 1
@@ -115,6 +116,7 @@ def import_details(archive, data_dir):
                 }
                 for column in FLAGS:
                     details[column] = flag(row.get(column))
+                by_period[(number, period)] = details
                 previous = by_number.get(number)
                 if previous is None or period > previous["period_end"]:
                     by_number[number] = details
@@ -123,16 +125,23 @@ def import_details(archive, data_dir):
         raise ValueError("Unexpectedly few Part A records; declining to write")
     staged = []
     matched_numbers = set()
+    aligned_numbers = set()
     for folder in (data_dir / "ew", data_dir / "ew" / "numbers"):
         if not folder.is_dir():
             raise ValueError("Missing imported folder: " + str(folder))
         for path in folder.glob("*.json"):
             records = json.loads(path.read_text(encoding="utf-8"))
             for record in records:
-                details = by_number.get(str(record.get("number", "")))
+                number = str(record.get("number", ""))
+                period = record.get("year")
+                details = by_period.get((number, period)) if period else None
+                if details is None:
+                    details = by_number.get(number)
                 if details:
                     record["annual_return_part_a"] = details
-                    matched_numbers.add(str(record["number"]))
+                    matched_numbers.add(number)
+                    if period and period == details["period_end"]:
+                        aligned_numbers.add(number)
                 else:
                     record.pop("annual_return_part_a", None)
             staged.append((path, json.dumps(records, ensure_ascii=False, separators=(",", ":"))))
@@ -140,6 +149,7 @@ def import_details(archive, data_dir):
     if len(matched_numbers) < 10000:
         raise ValueError("Too few linked records; declining to write")
     manifest["annual_return_part_a_records"] = len(matched_numbers)
+    manifest["annual_return_part_a_aligned_periods"] = len(aligned_numbers)
     manifest["annual_return_part_a_source"] = "CCEW publicextract.charity_annual_return_parta.zip"
     manifest["annual_return_part_a_updated_utc"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
@@ -149,6 +159,7 @@ def import_details(archive, data_dir):
     print("Part A rows read:", raw_rows)
     print("Part A organisations found:", len(by_number))
     print("Charities successfully linked:", len(matched_numbers))
+    print("Matching reporting periods:", len(aligned_numbers))
 
 
 if __name__ == "__main__":
