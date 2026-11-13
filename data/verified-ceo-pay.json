@@ -1,0 +1,31 @@
+{
+  "source_policy": "Manually verified amounts from primary charity financial statements; not extrapolated from salary bands. Emoluments are reported remuneration, not necessarily base salary or total employer cost.",
+  "records": {
+    "ew:802052": {
+      "name": "BBC CHILDREN IN NEED",
+      "measure": "Chief Executive emoluments as reported in annual accounts",
+      "currency": "GBP",
+      "periods": [
+        {
+          "period_end": "2025-06-30",
+          "amount": 165695,
+          "source_url": "https://www.bbcchildreninneed.co.uk/wp-content/uploads/2026/02/Final-CiN-Appeal-Annual-Report-2025-signed.pdf",
+          "source_label": "Annual Report and Accounts 2025, Note on employee and pension information"
+        },
+        {
+          "period_end": "2024-06-30",
+          "amount": 160997,
+          "source_url": "https://www.bbcchildreninneed.co.uk/wp-content/uploads/2025/01/Final-CiN-Appeal-Annual-Report-2024-signed.pdf",
+          "source_label": "Annual Report and Accounts 2024"
+        },
+        {
+          "period_end": "2023-06-30",
+          "amount": 154044,
+          "source_url": "https://www.bbcchildreninneed.co.uk/wp-content/uploads/2024/01/Final-CiN-Appeal-Annual-Report-2023-signed-1.pdf",
+          "source_label": "Annual Report and Accounts 2023"
+        }
+      ],
+      "caution": "The accounts disclose a role-level amount; these figures alone do not establish the name of the pay recipient or separate employer pension contributions."
+    }
+  }
+}
