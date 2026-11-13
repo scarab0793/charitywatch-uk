@@ -371,11 +371,26 @@ const fullRows=async rows=>{
  }));
  return rows.map(item=>fetched.get(item.number)||item);
 };
+let verifiedPayIndex={};
+const getVerifiedPayIndex=async()=>{
+ try{
+  const data=await loadJson('data/verified-ceo-pay.json');
+  verifiedPayIndex=data.records||{};
+ }catch(_){verifiedPayIndex={};}
+ return verifiedPayIndex;
+};
+const cardCEOPay=(region,number)=>{
+ const entry=verifiedPayIndex[region+':'+number];
+ if(!entry?.periods?.length)return '<div>CEO remuneration: <strong class="muted">Not independently verified</strong></div>';
+ const latest=[...entry.periods].sort((a,b)=>String(b.period_end).localeCompare(String(a.period_end)))[0];
+ const link='<a href="'+escapeHTML(latest.source_url)+'" target="_blank" rel="noopener" title="'+escapeHTML(latest.source_label||'Primary annual accounts')+'">Annual report</a>';
+ return '<div>CEO remuneration: <strong>'+money(latest.amount)+'</strong><p class="small muted">Period end: '+escapeHTML(latest.period_end)+' · '+link+'<br>Reported basis: '+escapeHTML(entry.measure||'As disclosed')+'</p></div>';
+};
 const renderCharityCard=x=>{
  const region=searchRegion;
  const source=x.financial_source?'Charity Commission annual return history':'No financial return linked';
     const official=region==='ew'?'https://register-of-charities.charitycommission.gov.uk/en/charity-search/-/charity-details/'+encodeURIComponent(x.number):links[region];
-    return '<div class="card" style="margin:9px 0"><b>'+escapeHTML(x.name)+'</b><p class="small muted">Registration: '+escapeHTML(x.number)+' · '+escapeHTML(x.jurisdiction)+' · Financial period end: '+escapeHTML(x.year||'Not reported')+'</p><div class="cards"><div>Gross income: <strong>'+money(x.income)+'</strong></div><div>Gross expenditure: <strong>'+money(x.expenditure)+'</strong></div><div>CEO pay: <strong>Not reported</strong></div></div><p class="small muted">Source: '+escapeHTML(source)+' · <a href="'+escapeHTML(official)+'" target="_blank" rel="noopener">Official charity register</a></p>'+trend(x)+partA(x)+'<p><button type="button" data-profile="'+escapeHTML(x.number)+'" data-region="'+escapeHTML(region)+'">View full profile</button> <button type="button" data-add="'+escapeHTML(x.number)+'">Add to comparison</button></p></div>';
+    return '<div class="card" style="margin:9px 0"><b>'+escapeHTML(x.name)+'</b><p class="small muted">Registration: '+escapeHTML(x.number)+' · '+escapeHTML(x.jurisdiction)+' · Financial period end: '+escapeHTML(x.year||'Not reported')+'</p><div class="cards"><div>Gross income: <strong>'+money(x.income)+'</strong></div><div>Gross expenditure: <strong>'+money(x.expenditure)+'</strong></div>'+cardCEOPay(region,x.number)+'</div><p class="small muted">Source: '+escapeHTML(source)+' · <a href="'+escapeHTML(official)+'" target="_blank" rel="noopener">Official charity register</a></p>'+trend(x)+partA(x)+'<p><button type="button" data-profile="'+escapeHTML(x.number)+'" data-region="'+escapeHTML(region)+'">View full profile</button> <button type="button" data-add="'+escapeHTML(x.number)+'">Add to comparison</button></p></div>';
 };
 const renderNextPage=async()=>{
  const pageToken=searchVersion;
@@ -384,6 +399,7 @@ const renderNextPage=async()=>{
  const start=searchOffset;
  const end=Math.min(searchOffset+RESULTS_PER_PAGE,searchCandidates.length);
  const rows=await fullRows(searchCandidates.slice(start,end));
+ await getVerifiedPayIndex();
  if(pageToken!==searchVersion)return;
  searchOffset=end;
  window.currentMatches=(window.currentMatches||[]).concat(rows);
