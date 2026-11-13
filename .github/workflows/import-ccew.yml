@@ -1,0 +1,62 @@
+name: Import official England and Wales charity register
+on:
+  workflow_dispatch:
+    inputs:
+      archive_url:
+        description: "Direct HTTPS URL of the official Charity Commission main charity TXT ZIP (not the landing page)"
+        required: true
+        type: string
+permissions:
+  contents: write
+concurrency:
+  group: official-ccew-import
+  cancel-in-progress: false
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate official source URL
+        env:
+          ARCHIVE_URL: ${{ inputs.archive_url }}
+        run: |
+          python - <<'PY'
+          import os,urllib.parse
+          u=urllib.parse.urlsplit(os.environ["ARCHIVE_URL"])
+          allowed={"register-of-charities.charitycommission.gov.uk","charitycommission.gov.uk"}
+          assert u.scheme=="https" and u.hostname in allowed and not u.username and not u.password, "Only an official Charity Commission HTTPS host is permitted"
+          print("Approved official source host:",u.hostname)
+          PY
+      - name: Download official archive
+        env:
+          ARCHIVE_URL: ${{ inputs.archive_url }}
+        run: |
+          curl --fail --location --retry 3 --max-time 600 --max-filesize 500000000 "$ARCHIVE_URL" -o /tmp/charities.zip
+          python - <<'PY'
+          import zipfile
+          assert zipfile.is_zipfile("/tmp/charities.zip"),"URL did not return a ZIP archive"
+          PY
+      - name: Import and validate
+        run: |
+          python scripts/import_ccew.py --zip /tmp/charities.zip --output data
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          m=json.loads(Path("data/manifest-ew.json").read_text())
+          assert m["count"]>100000
+          assert m["shards"] and m["number_shards"]
+          print("Verified official charity count:",m["count"])
+          PY
+      - name: Commit verified directory
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/ew data/manifest-ew.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Import official England and Wales charity register"
+            git push
+          fi
