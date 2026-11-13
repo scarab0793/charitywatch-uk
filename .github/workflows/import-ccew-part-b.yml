@@ -1,0 +1,49 @@
+name: Import CCEW expenditure and reserves (Part B)
+on:
+  push:
+    paths:
+      - '.github/workflows/import-ccew-part-b.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: official-ccew-import
+  cancel-in-progress: false
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download official annual return Part B
+        run: |
+          curl --fail --location --retry 3 --max-time 600 --max-filesize 500000000 \
+            'https://ccewuksprdoneregsadata1.blob.core.windows.net/data/txt/publicextract.charity_annual_return_partb.zip' \
+            -o /tmp/partb.zip
+          python - <<'PY'
+          import zipfile
+          assert zipfile.is_zipfile('/tmp/partb.zip')
+          PY
+      - name: Join official expenditure details
+        run: |
+          python scripts/enrich_ccew_part_b.py --zip /tmp/partb.zip --output data
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          m=json.loads(Path('data/manifest-ew.json').read_text())
+          count=m.get('annual_return_part_b_records',0)
+          assert 10000<count<=m['count']
+          print('Matched charity Part B records:',count)
+          PY
+      - name: Commit validated records
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/ew data/manifest-ew.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Publish verified CCEW expenditure and reserves"
+            git push
+          fi
