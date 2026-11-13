@@ -1833,5 +1833,5 @@
   ],
   "salary_storage": "separate_shards_v1",
   "annual_return_part_a_source": "CCEW publicextract.charity_annual_return_parta.zip",
-  "annual_return_part_a_updated_utc": "2026-11-13T19:39:07.535073+00:00"
+  "annual_return_part_a_updated_utc": "2026-11-13T19:49:03.835974+00:00"
 }
