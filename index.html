@@ -152,11 +152,11 @@ const verifiedCEOAnalysis=(record,entry)=>{
  const years=[...(entry.periods||[])].sort((a,b)=>String(b.period_end).localeCompare(String(a.period_end)));
  const current=years[0],previous=years[1];
  const finance=comparableFinance(record);
- const match=years.map(pay=>({pay,income:finance.get(pay.period_end)?.income})).find(x=>typeof x.income==='number'&&x.income>0);
- const ratio=match?match.pay.amount/match.income*100:null;
+ const match={pay:current,income:finance.get(current.period_end)?.income};
+ const ratio=typeof match.income==='number'&&match.income>0?current.amount/match.income*100:null;
  const change=previous&&previous.amount>0?(current.amount-previous.amount)/previous.amount*100:null;
  const rate=change===null?'Not calculable':(change>=0?'+':'')+percent(change);
- return '<div class="profile-metrics">'+profileMetric('Latest verified CEO remuneration',money(current.amount))+profileMetric('Remuneration change from prior disclosure',rate)+profileMetric('CEO remuneration / gross income',ratio===null?'Not calculable':percent(ratio))+'</div><p class="small muted">'+escapeHTML(match?'CEO remuneration and gross income both relate to period ending '+match.pay.period_end+'.':'No matching annual-income period could be confirmed. The percentage is withheld.')+(previous?' Previous remuneration period ending '+escapeHTML(previous.period_end)+'.':'')+' Changes are nominal and do not account for inflation, role transitions or differing pay definitions.</p>';
+ return '<div class="profile-metrics">'+profileMetric('Latest verified CEO remuneration',money(current.amount))+profileMetric('Remuneration change from prior disclosure',rate)+profileMetric('CEO remuneration / gross income',ratio===null?'Not calculable':percent(ratio))+'</div><p class="small muted">'+escapeHTML(ratio!==null?'Latest CEO remuneration and gross income both relate to period ending '+current.period_end+'.':'No matching gross-income period for the latest CEO remuneration could be confirmed. The percentage is withheld.')+(previous?' Previous remuneration period ending '+escapeHTML(previous.period_end)+'.':'')+' Changes are nominal and do not account for inflation, role transitions or differing pay definitions.</p>';
 };
 const independentlyVerifiedPay=async record=>{
  const region=record.jurisdiction?.toLowerCase()||'ew';
