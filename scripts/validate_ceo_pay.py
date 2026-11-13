@@ -15,6 +15,7 @@ APPROVED_HOST_SUFFIXES = (
     "charitycommission.gov.uk",
     "bbcchildreninneed.co.uk",
     "oxfam.org.uk",
+    "wateraid.org",
 )
 FILE = Path(__file__).resolve().parents[1] / "data" / "verified-ceo-pay.json"
 
