@@ -51,6 +51,13 @@ jobs:
           import zipfile
           assert zipfile.is_zipfile('/tmp/history.zip'), 'Invalid annual history ZIP'
           PY
+      - name: Download official detailed annual return Part A
+        run: |
+          curl --fail --location --retry 3 --max-time 600 --max-filesize 500000000 'https://ccewuksprdoneregsadata1.blob.core.windows.net/data/txt/publicextract.charity_annual_return_parta.zip' -o /tmp/parta.zip
+          python - <<'PY'
+          import zipfile
+          assert zipfile.is_zipfile('/tmp/parta.zip'), 'Invalid detailed annual return ZIP'
+          PY
       - name: Import and validate
         run: |
           python scripts/import_ccew.py --zip /tmp/charities.zip --output data
@@ -72,6 +79,16 @@ jobs:
           assert m['financial_records'] >= 150000, 'Financial coverage below safe floor'
           assert m['financial_records'] <= m['count'], 'Unexpected financial coverage'
           print('Verified financial coverage:',m['financial_records'], '/',m['count'])
+          PY
+      - name: Join government funding and salary band records
+        run: |
+          python scripts/enrich_ccew_part_a.py --zip /tmp/parta.zip --output data
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          m=json.loads(Path('data/manifest-ew.json').read_text())
+          assert m['annual_return_part_a_records'] > 10000
+          print('Verified detailed return records:', m['annual_return_part_a_records'])
           PY
       - name: Commit verified directory
         run: |
