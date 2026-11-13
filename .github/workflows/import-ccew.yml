@@ -61,6 +61,13 @@ jobs:
           import zipfile
           assert zipfile.is_zipfile('/tmp/parta.zip'), 'Invalid detailed annual return ZIP'
           PY
+      - name: Download official detailed annual return Part B
+        run: |
+          curl --fail --location --retry 3 --max-time 600 --max-filesize 500000000 'https://ccewuksprdoneregsadata1.blob.core.windows.net/data/txt/publicextract.charity_annual_return_partb.zip' -o /tmp/partb.zip
+          python - <<'PY'
+          import zipfile
+          assert zipfile.is_zipfile('/tmp/partb.zip'), 'Invalid detailed Part B annual return ZIP'
+          PY
       - name: Import and validate
         run: |
           python scripts/import_ccew.py --zip /tmp/charities.zip --output data
@@ -92,6 +99,16 @@ jobs:
           m=json.loads(Path('data/manifest-ew.json').read_text())
           assert m['annual_return_part_a_records'] > 10000
           print('Verified detailed return records:', m['annual_return_part_a_records'])
+          PY
+      - name: Join official expenditure categories and reserves
+        run: |
+          python scripts/enrich_ccew_part_b.py --zip /tmp/partb.zip --output data
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          m=json.loads(Path('data/manifest-ew.json').read_text())
+          assert 10000 < m['annual_return_part_b_records'] <= m['count']
+          print('Verified detailed expenditure records:',m['annual_return_part_b_records'])
           PY
       - name: Build indexed name-word search
         run: |
