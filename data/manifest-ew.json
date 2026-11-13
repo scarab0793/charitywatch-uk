@@ -922,5 +922,9 @@
   "source_archive": "charities.zip",
   "sha256": "cbe4ba2b4c24ad853a6f0c3f6139e0def9982958d009b275b3afb60535ec37d6",
   "generated_utc": "2026-11-13T14:55:55.874089+00:00",
-  "note": "Figures are published only if clearly labelled in the main charity extract; otherwise null. Annual return join not yet implemented."
+  "note": "Figures are published only if clearly labelled in the main charity extract; otherwise null. Annual return join not yet implemented.",
+  "financial_records": 245325,
+  "financial_source": "CCEW charity_annual_return_history",
+  "financial_updated_utc": "2026-11-13T15:09:16.208360+00:00",
+  "history_sha256": "366d97c0219b4d3d299e6d0c89e0a097259d55c2cb37b8c911dd06677e992b25"
 }
