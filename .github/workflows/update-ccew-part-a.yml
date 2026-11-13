@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - '.github/workflows/update-ccew-part-a.yml'
+      - 'scripts/enrich_ccew_part_a.py'
   workflow_dispatch:
 permissions:
   contents: write
@@ -36,7 +37,9 @@ jobs:
           m=json.loads(Path('data/manifest-ew.json').read_text())
           count=m['annual_return_part_a_records']
           assert 10000<count<=m['count']
+          assert m['annual_return_part_a_aligned_periods']>1000, 'Too few comparable reporting periods'
           print('Detailed Part A coverage:',count,'/',m['count'])
+          print('Matching financial periods:',m['annual_return_part_a_aligned_periods'])
           with open(Path.cwd() / 'summary.md','w') as f:
               f.write(f"### CCEW detailed Part A import\n\nLinked charities: **{count:,}** of **{m['count']:,}**\n")
           PY
