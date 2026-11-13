@@ -19,12 +19,16 @@ $('searchForm').addEventListener('submit',async e=>{
   const manifestResponse=await fetch('data/manifest-'+region+'.json',{cache:'no-store'});
   if(!manifestResponse.ok)throw Error('No dataset has been imported for this jurisdiction yet.');
   const manifest=await manifestResponse.json();
+  const byNumber=/^[a-zA-Z0-9-]+$/.test(q) && /[0-9]/.test(q);
   const bucket=key(q);
-  if(!manifest.shards.includes(bucket)){results.innerHTML='<p>No matching name prefix in the imported dataset. <a href="'+links[region]+'" target="_blank" rel="noopener">Check the official register</a>.</p>';return;}
-  const response=await fetch('data/'+region+'/'+encodeURIComponent(bucket)+'.json');
+  const numberBucket=(q.toLowerCase().replace(/[^a-z0-9]/g,'')+'__').slice(0,2);
+  const shard=byNumber && manifest.number_shards?.includes(numberBucket)?numberBucket:bucket;
+  const prefix=byNumber && manifest.number_shards?.includes(numberBucket)?region+'/numbers/':region+'/';
+  if(!(prefix===region+'/numbers/'?manifest.number_shards:manifest.shards).includes(shard)){results.innerHTML='<p>No matching name prefix in the imported dataset. <a href="'+links[region]+'" target="_blank" rel="noopener">Check the official register</a>.</p>';return;}
+  const response=await fetch('data/'+prefix+encodeURIComponent(shard)+'.json');
   if(!response.ok)throw Error('Data shard unavailable.');
   const records=await response.json();
-  const matches=records.filter(x=>x.name.toLowerCase().includes(q.toLowerCase())||x.number===q).slice(0,30);
+  const matches=records.filter(x=>x.name.toLowerCase().includes(q.toLowerCase())||x.number.toLowerCase()===q.toLowerCase()).slice(0,30);
   results.innerHTML=matches.length?'<p>'+matches.length+' result(s) shown (maximum 30).</p>'+matches.map(x=>'<div class="card" style="margin:9px 0"><b>'+escapeHTML(x.name)+'</b><p class="small muted">Registration: '+escapeHTML(x.number)+' · '+escapeHTML(x.jurisdiction)+' · Year: '+escapeHTML(x.year||'Not reported')+'</p><div class="cards"><div>Income: <strong>'+money(x.income)+'</strong></div><div>Expenditure: <strong>'+money(x.expenditure)+'</strong></div><div>CEO pay: <strong>Not reported</strong></div></div></div>').join(''):'<p>No matching imported records. <a href="'+links[region]+'" target="_blank" rel="noopener">Check the official register</a>.</p>';
  }catch(err){results.innerHTML='<p>'+escapeHTML(err.message)+'</p><p><a href="'+links[region]+'" target="_blank" rel="noopener">Search the official register</a></p>';}
 });
