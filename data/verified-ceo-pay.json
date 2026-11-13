@@ -64,14 +64,16 @@
         {
           "period_end": "2025-03-31",
           "amount": 142110,
-          "source_url": "https://www.wateraid.org/uk/about-us/frequently-asked-questions",
-          "source_label": "WaterAid UK FAQ citing 2024/25 annual accounts; pension contributions disclosed separately as £16,124"
+          "source_url": "https://www.wateraid.org/sites/g/files/jkxoof271/files/2025-09/WaterAid%20annual%20report%202024%E2%80%9325.pdf",
+          "source_label": "WaterAid UK Annual Report 2024–25, chief executive benefits disclosure, p. 68",
+          "page": 68
         },
         {
           "period_end": "2024-03-31",
           "amount": 137481,
-          "source_url": "https://www.wateraid.org/uk/about-us/frequently-asked-questions",
-          "source_label": "WaterAid UK FAQ and 2024/25 annual accounts comparative figure; pension contributions £15,975"
+          "source_url": "https://www.wateraid.org/sites/g/files/jkxoof271/files/2025-09/WaterAid%20annual%20report%202024%E2%80%9325.pdf",
+          "source_label": "WaterAid UK Annual Report 2024–25, chief executive benefits disclosure, p. 68",
+          "page": 68
         }
       ],
       "caution": "This figure includes employer National Insurance and taxable benefits in kind, unlike gross pay at Oxfam. Employer pension contributions are excluded. WaterAid's later annual reports may contain newer figures."
