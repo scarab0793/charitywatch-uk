@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - '.github/workflows/import-ccew-part-b.yml'
+      - 'scripts/enrich_ccew_part_b.py'
   workflow_dispatch:
 permissions:
   contents: write
@@ -37,6 +38,14 @@ jobs:
           count=m.get('annual_return_part_b_records',0)
           assert 10000<count<=m['count']
           print('Matched charity Part B records:',count)
+          print('Matched financial reporting periods:',m.get('annual_return_part_b_aligned_periods',0))
+          PY
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          m=json.loads(Path('data/manifest-ew.json').read_text())
+          assert m['annual_return_part_b_aligned_periods'] > 1000, 'Too few same-period matches'
+          print('Data integrity checks passed.')
           PY
       - name: Commit validated records
         run: |
