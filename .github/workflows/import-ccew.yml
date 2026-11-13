@@ -1,5 +1,8 @@
 name: Import official England and Wales charity register
 on:
+  push:
+    paths:
+      - '.github/workflows/import-ccew.yml'
   schedule:
     - cron: '17 4 * * 1'
   workflow_dispatch:
@@ -17,7 +20,7 @@ concurrency:
 jobs:
   import:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -37,7 +40,7 @@ jobs:
           PY
       - name: Download official archive
         env:
-          ARCHIVE_URL: ${{ inputs.archive_url }}
+          ARCHIVE_URL: ${{ inputs.archive_url || 'https://ccewuksprdoneregsadata1.blob.core.windows.net/data/txt/publicextract.charity.zip' }}
         run: |
           curl --fail --location --retry 3 --max-time 600 --max-filesize 500000000 "$ARCHIVE_URL" -o /tmp/charities.zip
           python - <<'PY'
