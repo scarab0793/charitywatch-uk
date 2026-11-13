@@ -7,7 +7,7 @@ does not infer annual-return history, CEO pay or grant recipients.
 Usage:
  python scripts/import_ccew.py --zip publicextract.charity.zip --output data
 """
-import argparse,csv,datetime,hashlib,io,json,re,unicodedata,zipfile
+import argparse,csv,datetime,hashlib,io,json,re,sys,unicodedata,zipfile
 from collections import defaultdict
 from pathlib import Path
 
@@ -26,6 +26,15 @@ def number(v):
  except ValueError:return None
 
 def run(archive,out):
+ # Official exports can contain long narrative/text fields. Increase the CSV
+ # parser limit safely without assuming the platform supports sys.maxsize.
+ limit=sys.maxsize
+ while True:
+  try:
+   csv.field_size_limit(limit)
+   break
+  except OverflowError:
+   limit=limit//10
  digest=hashlib.sha256(archive.read_bytes()).hexdigest()
  with zipfile.ZipFile(archive) as z:
   files=[n for n in z.namelist() if n.lower().endswith(".txt") and not n.startswith("__MACOSX")]
