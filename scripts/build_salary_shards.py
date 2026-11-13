@@ -70,7 +70,7 @@ def run(archive, root):
         if len(names) != 1:
             raise ValueError("Expected one official Part A TXT file")
         with z.open(names[0]) as raw:
-            reader = csv.DictReader(io.TextIOWrapper(raw, encoding="utf-8-sig", newline="", errors="replace"), delimiter="\\t")
+            reader = csv.DictReader(io.TextIOWrapper(raw, encoding="utf-8-sig", newline="", errors="replace"), delimiter="\t")
             required = {"registered_charity_number", "fin_period_end_date", "count_salary_band_60001_70000", "count_salary_band_over_500000"}
             if not required.issubset(reader.fieldnames or []):
                 raise ValueError("Unexpected official Part A salary schema")
