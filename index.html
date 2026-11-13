@@ -184,6 +184,7 @@ const fullRows=async rows=>{
  return rows.map(item=>fetched.get(item.number)||item);
 };
 const renderCharityCard=x=>{
+ const region=searchRegion;
  const source=x.financial_source?'Charity Commission annual return history':'No financial return linked';
     const official=region==='ew'?'https://register-of-charities.charitycommission.gov.uk/en/charity-search/-/charity-details/'+encodeURIComponent(x.number):links[region];
     return '<div class="card" style="margin:9px 0"><b>'+escapeHTML(x.name)+'</b><p class="small muted">Registration: '+escapeHTML(x.number)+' · '+escapeHTML(x.jurisdiction)+' · Financial period end: '+escapeHTML(x.year||'Not reported')+'</p><div class="cards"><div>Gross income: <strong>'+money(x.income)+'</strong></div><div>Gross expenditure: <strong>'+money(x.expenditure)+'</strong></div><div>CEO pay: <strong>Not reported</strong></div></div><p class="small muted">Source: '+escapeHTML(source)+' · <a href="'+escapeHTML(official)+'" target="_blank" rel="noopener">Official charity register</a></p>'+trend(x)+partA(x)+'<p><button type="button" data-add="'+escapeHTML(x.number)+'">Add to comparison</button></p></div>';
