@@ -1,8 +1,6 @@
 name: Refresh UK charity directory
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '17 5 * * 1'
 permissions:
   contents: write
 concurrency:
@@ -19,7 +17,8 @@ jobs:
           python-version: '3.12'
       - name: Download UK charity register directory
         run: |
-          curl --fail --location --retry 3 --max-time 180 "https://opencharities.uk/data/charities.csv" -o /tmp/charities.csv
+          test -n "${{ secrets.CHARITY_CSV_URL }}" || { echo 'Set CHARITY_CSV_URL to a verified CSV feed'; exit 1; }
+          curl --fail --location --retry 3 --max-time 180 "${{ secrets.CHARITY_CSV_URL }}" -o /tmp/charities.csv
           test -s /tmp/charities.csv
       - name: Import charity directory
         run: python scripts/import_uk_register.py --input /tmp/charities.csv --output data
