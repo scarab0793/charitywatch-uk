@@ -1,5 +1,7 @@
 name: Import official England and Wales charity register
 on:
+  schedule:
+    - cron: '17 4 * * 1'
   workflow_dispatch:
     inputs:
       archive_url:
@@ -23,7 +25,7 @@ jobs:
           python-version: '3.12'
       - name: Validate official source URL
         env:
-          ARCHIVE_URL: ${{ inputs.archive_url }}
+          ARCHIVE_URL: ${{ inputs.archive_url || 'https://ccewuksprdoneregsadata1.blob.core.windows.net/data/txt/publicextract.charity.zip' }}
         run: |
           python - <<'PY'
           import os,urllib.parse
@@ -42,6 +44,13 @@ jobs:
           import zipfile
           assert zipfile.is_zipfile("/tmp/charities.zip"),"URL did not return a ZIP archive"
           PY
+      - name: Download annual return history
+        run: |
+          curl --fail --location --retry 3 --max-time 600 --max-filesize 500000000 'https://ccewuksprdoneregsadata1.blob.core.windows.net/data/txt/publicextract.charity_annual_return_history.zip' -o /tmp/history.zip
+          python - <<'PY'
+          import zipfile
+          assert zipfile.is_zipfile('/tmp/history.zip'), 'Invalid annual history ZIP'
+          PY
       - name: Import and validate
         run: |
           python scripts/import_ccew.py --zip /tmp/charities.zip --output data
@@ -53,12 +62,23 @@ jobs:
           assert m["shards"] and m["number_shards"]
           print("Verified official charity count:",m["count"])
           PY
+      - name: Join annual returns and validate coverage
+        run: |
+          python scripts/enrich_ccew_finances.py --charity-zip /tmp/charities.zip --history-zip /tmp/history.zip --output data
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          m=json.loads(Path('data/manifest-ew.json').read_text())
+          assert m['financial_records'] >= 150000, 'Financial coverage below safe floor'
+          assert m['financial_records'] <= m['count'], 'Unexpected financial coverage'
+          print('Verified financial coverage:',m['financial_records'], '/',m['count'])
+          PY
       - name: Commit verified directory
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/ew data/manifest-ew.json
           if ! git diff --cached --quiet; then
-            git commit -m "Import official England and Wales charity register"
+            git commit -m "Refresh CCEW charity directory and annual finances"
             git push
           fi
