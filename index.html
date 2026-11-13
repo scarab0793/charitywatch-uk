@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Independent UK charity finance transparency explorer."><title>CharityWatch UK — Follow the money</title><style>
 :root{font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;color:#14263d;background:#f4f7fb}*{box-sizing:border-box}body{margin:0}header{background:#102d4a;color:white;padding:26px max(24px,calc((100vw - 1100px)/2))}header strong{font-size:25px}header p{color:#c6d8e9;margin:7px 0 0}main{max-width:1100px;margin:auto;padding:36px 22px}h1{font-size:clamp(30px,5vw,48px);margin:0 0 12px}h2{font-size:23px}.lead{color:#536477;font-size:18px;max-width:720px}.panel{background:white;border:1px solid #dce5ee;border-radius:16px;padding:24px;margin:22px 0;box-shadow:0 4px 18px #16314d08}.search{display:flex;gap:10px;flex-wrap:wrap}input,select,button{font:inherit;padding:13px;border:1px solid #bfcddd;border-radius:9px}input{flex:1;min-width:220px}button{background:#0866a4;color:white;border:0;cursor:pointer}button:hover{background:#064d7c}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}.card{background:#f5f9fc;border:1px solid #e1e9f1;border-radius:12px;padding:17px}.card b{display:block;margin-bottom:8px}.card a{color:#075e99}.muted{color:#5c6d7c}.tag{font-size:12px;background:#e8f3fa;color:#075e99;border-radius:50px;padding:5px 9px;display:inline-block}footer{padding:35px 22px;text-align:center;color:#607185}a{color:#075e99}.note{border-left:4px solid #e6a73e;padding:10px 15px;background:#fff9eb}#results{margin-top:18px}.stat{font-size:27px;font-weight:750}.small{font-size:13px}#suggestions{margin-top:8px;border:1px solid #cbd9e6;border-radius:12px;background:white;max-height:380px;overflow-y:auto;overscroll-behavior:contain;box-shadow:0 7px 22px #19395614}.suggestion-count{position:sticky;top:0;z-index:1;background:#eaf4fd;border-bottom:1px solid #cbd9e6;padding:8px 13px;font-size:12px;color:#36536e}#suggestions[hidden]{display:none}.suggestion{display:block;width:100%;border:0;border-bottom:1px solid #edf1f5;border-radius:0;padding:12px 15px;background:white;color:#14263d;text-align:left;cursor:pointer}.suggestion:last-child{border-bottom:0}.suggestion:hover,.suggestion[aria-selected="true"]{background:#eaf4fd}.suggestion strong{display:block;font-weight:650}.suggestion span{display:block;margin-top:3px;color:#536477;font-size:12px}details{margin-top:12px}summary{cursor:pointer;color:#075e99;font-weight:600}.history{margin-top:12px}.history-row{display:grid;grid-template-columns:105px 1fr 1fr;gap:12px;padding:9px 0;border-top:1px solid #dde5ec;font-size:12px}.history-row i{display:block;height:7px;border-radius:4px;margin-top:5px;min-width:1px}@media(max-width:600px){.history-row{grid-template-columns:1fr 1fr}.history-row span:first-child{grid-column:1/-1}}
 </style></head><body><header><strong>CharityWatch UK</strong><p>Follow the money. See the evidence.</p></header><main><span class="tag">Independent transparency project · Early build</span><h1>Where does charity money go?</h1><p class="lead">Explore the financial reports of charities across England, Wales, Scotland and Northern Ireland. We distinguish verified figures from missing information.</p>
-<section class="panel"><h2>Find a charity</h2><p class="muted">Start typing a charity name to see all matching suggestions after three characters, or search by registration number. Financial figures are from the Charity Commission annual returns where available. If no local dataset is available, use the official register links below.</p><form class="search" id="searchForm"><input id="q" required autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="suggestions" placeholder="Start typing a charity name (3+ letters) or registration number" aria-label="Charity name or registration number"><select id="region" aria-label="Register"><option value="ew">England & Wales</option><option value="sc">Scotland</option><option value="ni">Northern Ireland</option></select><button>Search database</button></form><div id="suggestions" role="listbox" aria-label="Suggested charities" hidden></div><div id="results" role="status" aria-live="polite"></div><p class="small muted">Results only include records imported into this project. Directory names may come from OpenCharities; official regulators remain authoritative for financial data.</p></section>
+<section class="panel"><h2>Find a charity</h2><p class="muted">Type at least three characters to find charities by any word in their name, or search by registration number. Financial figures are from the Charity Commission annual returns where available. If no local dataset is available, use the official register links below.</p><form class="search" id="searchForm"><input id="q" required autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="suggestions" placeholder="Start typing a charity name (3+ letters) or registration number" aria-label="Charity name or registration number"><select id="region" aria-label="Register"><option value="ew">England & Wales</option><option value="sc">Scotland</option><option value="ni">Northern Ireland</option></select><button>Search database</button></form><div id="suggestions" role="listbox" aria-label="Suggested charities" hidden></div><div id="results" role="status" aria-live="polite"></div><p class="small muted">Results only include records imported into this project. Directory names may come from OpenCharities; official regulators remain authoritative for financial data.</p></section>
 <section class="panel"><h2>Data coverage and freshness</h2><div id="dataStatus" class="cards" aria-live="polite"><p class="muted">Loading official dataset status…</p></div></section>
 <section class="panel"><h2>Compare charities</h2><div id="comparison" aria-live="polite"></div></section>
 <section class="panel"><h2>What we will track</h2><div class="cards"><div class="card"><b>Annual income</b><span class="muted">Donations, grants, investments and other revenue.</span></div><div class="card"><b>Annual spending</b><span class="muted">Charitable activities, fundraising and other expenditure.</span></div><div class="card"><b>CEO remuneration</b><span class="muted">Named compensation only where disclosed and verified.</span></div><div class="card"><b>Grants and recipients</b><span class="muted">Published grants, beneficiaries and supported projects.</span></div><div class="card"><b>Reserves and assets</b><span class="muted">Available balances and multi-year trends.</span></div><div class="card"><b>Source documents</b><span class="muted">Original filings, reporting year and extraction notes.</span></div></div></section>
@@ -31,6 +31,27 @@ const loadJson=async path=>{
   searchCache.set(path,request);
  }
  return searchCache.get(path);
+};
+const nameWords=name=>String(name??'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().match(/[a-z0-9]+/g)||[];
+const matchesWords=(name,query)=>{const terms=nameWords(query);const words=nameWords(name);return terms.length>0&&terms.every(term=>words.some(word=>word.startsWith(term)));};
+const findCandidates=async(manifest,region,q,byNumber)=>{
+ const shard=key(q);
+ if(byNumber){
+  if(!manifest.number_shards?.includes(shard))return [];
+  const records=await loadJson('data/'+region+'/numbers/'+shard+'.json');
+  return records.filter(x=>normalized(x.number).startsWith(normalized(q)));
+ }
+ if(manifest.word_shards?.length && manifest.word_search_mode==='word_prefix_v1'){
+  const terms=nameWords(q);
+  const indexed=terms.find(term=>term.length>=3);
+  if(indexed && manifest.word_shards.includes(indexed.slice(0,2))){
+   const rows=await loadJson('data/words/'+region+'/'+indexed.slice(0,2)+'.json');
+   return rows.filter(x=>matchesWords(x.name,q));
+  }
+ }
+ if(!manifest.shards?.includes(shard))return [];
+ const rows=await loadJson('data/'+region+'/'+shard+'.json');
+ return rows.filter(x=>normalized(x.name).startsWith(normalized(q)));
 };
 let suggestionTimer=0;
 let suggestionGeneration=0;
@@ -79,7 +100,7 @@ const chooseSuggestion=index=>{
  if(!record)return;
  suggestionGeneration++;
  clearTimeout(suggestionTimer);
- searchInput.value=record.name;
+ searchInput.value=record.number;
  closeSuggestions();
  $('searchForm').requestSubmit();
 };
@@ -95,12 +116,9 @@ const updateSuggestions=async()=>{
  try{
   const manifest=await loadJson('data/manifest-'+region+'.json');
   const byNumber=/^(?:[0-9]{3,}|SC[0-9]+|NIC[0-9]+)$/i.test(q);
-  const shard=key(q);
-  const available=byNumber?manifest.number_shards:manifest.shards;
-  const path='data/'+region+'/'+(byNumber?'numbers/':'')+shard+'.json';
-  const records=available?.includes(shard)?await loadJson(path):[];
+  const records=await findCandidates(manifest,region,q,byNumber);
   if(generation!==suggestionGeneration||searchInput.value.trim()!==q||$('region').value!==region)return;
-  suggestionRecords=records.filter(x=>byNumber?normalized(x.number).startsWith(query):normalized(x.name).startsWith(query));
+  suggestionRecords=records;
   renderedSuggestions=0;
   activeSuggestion=-1;
   if(!suggestionRecords.length){
@@ -155,16 +173,26 @@ $('searchForm').addEventListener('submit',async e=>{
  try{
   const manifest=await loadJson('data/manifest-'+region+'.json');
   const byNumber=/^(?:[0-9]{4,}|SC[0-9]+|NIC[0-9]+)$/i.test(q);
-  const shard=key(q);
-  const prefix=byNumber?region+'/numbers/':region+'/';
-  const available=byNumber?manifest.number_shards:manifest.shards;
-  if(!available?.includes(shard)){results.innerHTML='<p>No matching registration number or name prefix in the imported dataset. <a href="'+links[region]+'" target="_blank" rel="noopener">Check the official register</a>.</p>';return;}
-  const records=await loadJson('data/'+prefix+encodeURIComponent(shard)+'.json');
-  const query=normalized(q);
-  const matches=records.filter(x=>byNumber?normalized(x.number)===query:normalized(x.name).startsWith(query)).slice(0,30);
+  const candidates=await findCandidates(manifest,region,q,byNumber);
+  const count=candidates.length;
+  let matches=candidates.slice(0,30);
+  // The lightweight word index contains names and numbers only. Resolve the
+  // first 30 selected results back to their original financial records.
+  if(!byNumber&&manifest.word_shards?.length&&manifest.word_search_mode==='word_prefix_v1'){
+   const groups=new Map();
+   for(const row of matches){const prefix=key(row.number);if(!groups.has(prefix))groups.set(prefix,[]);groups.get(prefix).push(row.number);}
+   const full=new Map();
+   await Promise.all([...groups].map(async([prefix,numbers])=>{
+    if(!manifest.number_shards?.includes(prefix))return;
+    const records=await loadJson('data/'+region+'/numbers/'+prefix+'.json');
+    const wanted=new Set(numbers);
+    for(const record of records)if(wanted.has(record.number))full.set(record.number,record);
+   }));
+   matches=matches.map(row=>full.get(row.number)||row);
+  }
   const financeInfo=manifest.financial_records?'<p class="small muted">Financial returns linked to '+Number(manifest.financial_records).toLocaleString('en-GB')+' charities in this register. Financial year end and source shown per result. Blank fields mean no verified value in this dataset.</p>':'';
   window.currentMatches=matches;
-  results.innerHTML=matches.length?'<p>'+matches.length+' result(s) shown (maximum 30).</p>'+financeInfo+matches.map(x=>{
+  results.innerHTML=matches.length?'<p>'+count.toLocaleString('en-GB')+' matching charities · '+matches.length+' shown with details (maximum 30). Select from the live list to open a specific charity.</p>'+financeInfo+matches.map(x=>{
     const source=x.financial_source?'Charity Commission annual return history':'No financial return linked';
     const official=region==='ew'?'https://register-of-charities.charitycommission.gov.uk/en/charity-search/-/charity-details/'+encodeURIComponent(x.number):links[region];
     return '<div class="card" style="margin:9px 0"><b>'+escapeHTML(x.name)+'</b><p class="small muted">Registration: '+escapeHTML(x.number)+' · '+escapeHTML(x.jurisdiction)+' · Financial period end: '+escapeHTML(x.year||'Not reported')+'</p><div class="cards"><div>Gross income: <strong>'+money(x.income)+'</strong></div><div>Gross expenditure: <strong>'+money(x.expenditure)+'</strong></div><div>CEO pay: <strong>Not reported</strong></div></div><p class="small muted">Source: '+escapeHTML(source)+' · <a href="'+escapeHTML(official)+'" target="_blank" rel="noopener">Official charity register</a></p>'+trend(x)+partA(x)+'<p><button type="button" data-add="'+escapeHTML(x.number)+'">Add to comparison</button></p></div>';
