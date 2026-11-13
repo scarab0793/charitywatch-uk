@@ -11,6 +11,7 @@ import datetime
 import io
 import json
 import zipfile
+from collections import Counter
 from collections import defaultdict
 from pathlib import Path
 
@@ -27,12 +28,15 @@ BANDS = (
 
 def date(value):
     value = str(value or "").strip()
-    for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%Y-%m-%d %H:%M:%S"):
+    for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%Y/%m/%d", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M:%S.%f", "%d/%m/%Y %H:%M:%S"):
         try:
             return datetime.datetime.strptime(value, fmt).date().isoformat()
         except ValueError:
             pass
-    return None
+    try:
+        return datetime.date.fromisoformat(value[:10]).isoformat()
+    except ValueError:
+        return None
 
 
 def count(value):
@@ -65,6 +69,7 @@ def run(archive, root):
     latest = {}
     exact = {}
     rows = 0
+    date_failures = Counter()
     with zipfile.ZipFile(archive) as z:
         names = [name for name in z.namelist() if name.lower().endswith(".txt")]
         if len(names) != 1:
@@ -79,8 +84,10 @@ def run(archive, root):
                 reg = (row.get("registered_charity_number") or "").strip()
                 if reg not in requested:
                     continue
-                ending = date(row.get("fin_period_end_date"))
+                raw_date = row.get("fin_period_end_date")
+                ending = date(raw_date)
                 if not ending:
+                    date_failures[str(raw_date or "<blank>")[:35]] += 1
                     continue
                 # The same charity can have many historical Part A returns.
                 # Retain the latest record and an exact financial-period match.
@@ -94,8 +101,12 @@ def run(archive, root):
                     exact[reg] = item
                 if is_latest:
                     latest[reg] = item
+    print("Official Part A rows read:", rows)
+    print("Official Part A linked identifiers:", len(latest))
+    if date_failures:
+        print("Unparseable financial period formats (counts only):", date_failures.most_common(5))
     if len(latest) < 10000:
-        raise ValueError("Too few official Part A rows, refusing publication")
+        raise ValueError("Too few official Part A rows, refusing publication; check official date formats and registration number join")
     buckets = defaultdict(list)
     matched = 0
     reporting = 0
