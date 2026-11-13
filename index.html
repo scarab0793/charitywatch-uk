@@ -169,6 +169,17 @@ const renderProfile=record=>{
  $('charityProfile').hidden=false;
  $('charityProfile').scrollIntoView({behavior:'smooth',block:'start'});
 };
+const attachSalaryData=async(record,region,manifest)=>{
+ if(region!=='ew'||!manifest.salary_shards?.length||manifest.salary_storage!=='separate_shards_v1')return record;
+ const shard=key(record.number);
+ if(!manifest.salary_shards.includes(shard))return record;
+ try{
+  const records=await loadJson('data/pay/'+region+'/'+shard+'.json');
+  const pay=records.find(x=>normalized(x.number)===normalized(record.number));
+  if(pay)record.annual_return_part_a={...(record.annual_return_part_a||{}),period_end:pay.period_end,salary_bands:pay.salary_bands};
+ }catch(err){console.warn('Salary disclosure file unavailable',err);}
+ return record;
+};
 const showCharity=async(region,number,{setHash=true}={})=>{
  if(!/^(ew|sc|ni)$/.test(region)||!/^[A-Za-z0-9]{3,20}$/.test(number))return;
  const target=$('charityProfile');target.hidden=false;
@@ -182,6 +193,7 @@ const showCharity=async(region,number,{setHash=true}={})=>{
   const rows=await loadJson('data/'+region+'/numbers/'+bucket+'.json');
   const row=rows.find(item=>normalized(item.number)===normalized(number));
   if(!row)throw Error('Charity not found in the imported database');
+  await attachSalaryData(row,region,manifest);
   renderProfile(row);
   if(setHash)history.replaceState(null,'',profileKey(region,row.number));
  }catch(err){
