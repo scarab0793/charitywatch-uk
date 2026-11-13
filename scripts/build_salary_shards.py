@@ -51,54 +51,70 @@ def run(archive, root):
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     if manifest.get("count", 0) < 100000:
         raise ValueError("Official charity directory must be imported first")
+    # Restrict processing to registration numbers already published on the site.
+    # Keep only the latest and the matching financial period, not every
+    # historical filing: this avoids a potentially huge by_period dictionary.
+    requested = {}
+    for shard in sorted((root / "ew").glob("*.json")):
+        for record in json.loads(shard.read_text(encoding="utf-8")):
+            reg = str(record.get("number") or "")
+            if reg:
+                requested[reg] = record.get("year")
+    if len(requested) < 100000:
+        raise ValueError("Too few registered charities in the published name shards")
+    latest = {}
+    exact = {}
+    rows = 0
     with zipfile.ZipFile(archive) as z:
         names = [name for name in z.namelist() if name.lower().endswith(".txt")]
         if len(names) != 1:
             raise ValueError("Expected one official Part A TXT file")
         with z.open(names[0]) as raw:
-            reader = csv.DictReader(io.TextIOWrapper(raw, encoding="utf-8-sig", newline="", errors="replace"), delimiter="\t")
+            reader = csv.DictReader(io.TextIOWrapper(raw, encoding="utf-8-sig", newline="", errors="replace"), delimiter="\\t")
             required = {"registered_charity_number", "fin_period_end_date", "count_salary_band_60001_70000", "count_salary_band_over_500000"}
             if not required.issubset(reader.fieldnames or []):
                 raise ValueError("Unexpected official Part A salary schema")
-            latest = {}
-            by_period = {}
-            rows = 0
             for row in reader:
                 rows += 1
                 reg = (row.get("registered_charity_number") or "").strip()
-                ending = date(row.get("fin_period_end_date"))
-                if not reg or not ending:
+                if reg not in requested:
                     continue
-                bands = {band: count(row.get("count_salary_band_" + band)) for band in BANDS}
-                item = {"period_end": ending, "salary_bands": bands}
-                by_period[(reg, ending)] = item
-                if reg not in latest or ending > latest[reg]["period_end"]:
+                ending = date(row.get("fin_period_end_date"))
+                if not ending:
+                    continue
+                # The same charity can have many historical Part A returns.
+                # Retain the latest record and an exact financial-period match.
+                is_latest = reg not in latest or ending > latest[reg][0]
+                is_exact = requested[reg] == ending
+                if not is_latest and not is_exact:
+                    continue
+                values = [count(row.get("count_salary_band_" + band)) for band in BANDS]
+                item = (ending, values)
+                if is_exact:
+                    exact[reg] = item
+                if is_latest:
                     latest[reg] = item
     if len(latest) < 10000:
         raise ValueError("Too few official Part A rows, refusing publication")
-    buckets = defaultdict(dict)
-    matched = set()
-    reporting = set()
-    aligned = set()
+    buckets = defaultdict(list)
+    matched = 0
+    reporting = 0
+    aligned = len(exact)
     total = 0
-    for shard in sorted((root / "ew").glob("*.json")):
-        for record in json.loads(shard.read_text(encoding="utf-8")):
-            reg = str(record.get("number") or "")
-            ending = record.get("year")
-            item = by_period.get((reg, ending)) if ending else None
-            if item:
-                aligned.add(reg)
-            else:
-                item = latest.get(reg)
-            if item is None:
-                continue
-            matched.add(reg)
-            buckets[(reg.lower() + "__")[:2]][reg] = {"number": reg, **item}
-            values = item["salary_bands"].values()
-            if reg not in reporting and any(isinstance(v, int) for v in values):
-                reporting.add(reg)
-                total += sum(v for v in values if isinstance(v, int))
-    if len(matched) < 10000 or len(aligned) < 1000:
+    for reg in requested:
+        entry = exact.get(reg) or latest.get(reg)
+        if not entry:
+            continue
+        ending, values = entry
+        matched += 1
+        bands = dict(zip(BANDS, values))
+        buckets[(reg.lower() + "__")[:2]].append(
+            {"number": reg, "period_end": ending, "salary_bands": bands}
+        )
+        if any(isinstance(v, int) for v in values):
+            reporting += 1
+            total += sum(v for v in values if isinstance(v, int))
+    if matched < 10000 or aligned < 1000:
         raise ValueError("Too few linked official pay disclosures")
     output = root / "pay" / "ew"
     output.mkdir(parents=True, exist_ok=True)
@@ -106,13 +122,13 @@ def run(archive, root):
         path.unlink()
     for shard, entries in buckets.items():
         (output / (shard + ".json")).write_text(
-            json.dumps(list(entries.values()), ensure_ascii=False, separators=(",", ":")),
+            json.dumps(entries, ensure_ascii=False, separators=(",", ":")),
             encoding="utf-8",
         )
     manifest.update({
-        "annual_return_part_a_records": len(matched),
-        "annual_return_part_a_aligned_periods": len(aligned),
-        "salary_band_reporting_charities": len(reporting),
+        "annual_return_part_a_records": matched,
+        "annual_return_part_a_aligned_periods": aligned,
+        "salary_band_reporting_charities": reporting,
         "salary_band_reported_employees_over_60k": total,
         "salary_shards": sorted(buckets),
         "salary_storage": "separate_shards_v1",
@@ -120,7 +136,7 @@ def run(archive, root):
         "annual_return_part_a_updated_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
     })
     manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-    print(f"Part A rows: {rows}; charity matches: {len(matched)}; reporting salary bands: {len(reporting)}; exact period matches: {len(aligned)}")
+    print(f"Part A rows: {rows}; charity matches: {matched}; reporting salary bands: {reporting}; exact period matches: {aligned}")
 
 
 if __name__ == "__main__":
