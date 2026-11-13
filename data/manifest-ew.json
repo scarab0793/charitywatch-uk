@@ -1796,5 +1796,9 @@
     "zz"
   ],
   "word_search_mode": "word_prefix_v1",
-  "word_index_records": 357043
+  "word_index_records": 357043,
+  "annual_return_part_b_records": 22688,
+  "annual_return_part_b_aligned_periods": 17439,
+  "annual_return_part_b_source": "CCEW publicextract.charity_annual_return_partb.zip",
+  "annual_return_part_b_updated_utc": "2026-11-13T18:47:09.562912+00:00"
 }
