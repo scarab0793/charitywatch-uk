@@ -53,7 +53,7 @@ def run(charity_zip,history_zip,out):
  org=field(headers,'organisation_number')
  income=field(headers,'total_gross_income','gross_income','total_income')
  expense=field(headers,'total_gross_expenditure','gross_expenditure','total_expenditure')
- period=field(headers,'financial_period_end_date','financial_period_end','financial_year_end_date','financial_year_end')
+ period=field(headers,'financial_period_end_date','financial_period_end','financial_year_end_date','financial_year_end','financial_period_end_date')
  if not all((org,income,expense,period)):
   raise ValueError('Unknown annual history schema: '+', '.join(headers.values()))
  latest={};years=defaultdict(dict)
@@ -69,6 +69,8 @@ def run(charity_zip,history_zip,out):
   if registered not in latest or d>latest[registered]['year']:latest[registered]=item
  stream.close();z.close()
  if len(latest)<10000:raise ValueError('Too few financial records; refusing publication')
+ # Stage every changed file before replacing any published data.
+ staged=[]
  updated=0
  for folder in (out/'ew',out/'ew'/'numbers'):
   if not folder.exists():raise ValueError('Directory not imported: '+str(folder))
@@ -80,13 +82,15 @@ def run(charity_zip,history_zip,out):
      item.update(fin)
      item['financial_source']='CCEW annual return history'
      updated+=1
-   file.write_text(json.dumps(items,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
+   staged.append((file,json.dumps(items,ensure_ascii=False,separators=(',',':'))))
  manifest=out/'manifest-ew.json'
  meta=json.loads(manifest.read_text())
  meta['financial_records']=len(latest)
  meta['financial_source']='CCEW charity_annual_return_history'
  meta['financial_updated_utc']=datetime.datetime.now(datetime.timezone.utc).isoformat()
  meta['history_sha256']=hashlib.sha256(history_zip.read_bytes()).hexdigest()
+ for file,body in staged:
+  file.write_text(body,encoding='utf-8')
  manifest.write_text(json.dumps(meta,indent=2))
  print('Financially enriched charities:',len(latest),'shard records updated:',updated)
 if __name__=='__main__':
