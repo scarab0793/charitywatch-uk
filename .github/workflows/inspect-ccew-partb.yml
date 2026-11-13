@@ -1,0 +1,51 @@
+name: Inspect official CCEW expenditure fields
+on:
+  push:
+    paths:
+      - '.github/workflows/inspect-ccew-partb.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download official Part B archive
+        run: |
+          curl --fail --location --retry 3 --max-time 600 --max-filesize 500000000 \
+            'https://ccewuksprdoneregsadata1.blob.core.windows.net/data/txt/publicextract.charity_annual_return_partb.zip' -o /tmp/partb.zip
+      - name: Save verified field names to repository
+        run: |
+          python - <<'PY'
+          import csv,io,json,zipfile
+          from pathlib import Path
+          archive=Path('/tmp/partb.zip')
+          if not zipfile.is_zipfile(archive):raise ValueError('Invalid Part B archive')
+          result={'source':'CCEW official full register','archive':'publicextract.charity_annual_return_partb.zip','tables':[]}
+          with zipfile.ZipFile(archive) as z:
+              files=[x for x in z.namelist() if x.lower().endswith(('.txt','.csv'))]
+              if not files:raise ValueError('No text tables')
+              for name in files:
+                  with z.open(name) as raw:
+                      first=raw.readline().decode('utf-8-sig',errors='replace')
+                  delim='\t' if first.count('\t')>=first.count(',') else ','
+                  cols=next(csv.reader([first],delimiter=delim))
+                  if not cols or len(cols)>1000:raise ValueError('Unexpected table columns')
+                  result['tables'].append({'file':name,'delimiter':delim,'fields':cols})
+          Path('data/schema').mkdir(parents=True,exist_ok=True)
+          Path('data/schema/ccew-partb-fields.json').write_text(json.dumps(result,indent=2),encoding='utf-8')
+          for table in result['tables']:
+              print('TABLE',table['file'],'FIELD COUNT',len(table['fields']))
+              for col in table['fields']:print('FIELD',col)
+          PY
+      - name: Commit schema only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/schema/ccew-partb-fields.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Record verified official CCEW Part B expenditure schema"
+            git push
+          fi
