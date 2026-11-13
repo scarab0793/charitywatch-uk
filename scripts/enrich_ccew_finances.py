@@ -53,7 +53,7 @@ def run(charity_zip,history_zip,out):
  org=field(headers,'organisation_number')
  income=field(headers,'total_gross_income','gross_income','total_income')
  expense=field(headers,'total_gross_expenditure','gross_expenditure','total_expenditure')
- period=field(headers,'financial_period_end_date','financial_period_end','financial_year_end_date','financial_year_end','financial_period_end_date')
+ period=field(headers,'fin_period_end_date','financial_period_end_date','financial_period_end','financial_year_end_date','financial_year_end')
  if not all((org,income,expense,period)):
   raise ValueError('Unknown annual history schema: '+', '.join(headers.values()))
  latest={};years=defaultdict(dict)
