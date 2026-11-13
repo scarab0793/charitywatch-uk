@@ -99,6 +99,7 @@ def run(archive, data_dir):
             if missing:
                 raise ValueError("Unexpected Part B schema: " + ", ".join(sorted(missing)))
             latest = {}
+            by_period = {}
             rows = 0
             for record in reader:
                 rows += 1
@@ -111,6 +112,7 @@ def run(archive, data_dir):
                 if all(v is None for v in amounts.values()):
                     continue
                 item = {"period_end": period, **amounts, **counts}
+                by_period[(reg, period)] = item
                 previous = latest.get(reg)
                 if previous is None or period > previous["period_end"]:
                     latest[reg] = item
@@ -126,7 +128,10 @@ def run(archive, data_dir):
             records = json.loads(path.read_text(encoding="utf-8"))
             for record in records:
                 reg = str(record.get("number", ""))
-                partb = latest.get(reg)
+                wanted_period = record.get("year")
+                partb = by_period.get((reg, wanted_period)) if wanted_period else None
+                if partb is None:
+                    partb = latest.get(reg)
                 if partb:
                     record["annual_return_part_b"] = partb
                     joined.add(reg)
@@ -137,6 +142,8 @@ def run(archive, data_dir):
             staged.append((path, json.dumps(records, ensure_ascii=False, separators=(",", ":"))))
     if len(joined) < 10000 or len(joined) > manifest["count"]:
         raise ValueError("Part B join coverage invalid - refusing publication")
+    if len(aligned) < 1000:
+        raise ValueError("Too few period-aligned Part B records - refusing publication")
     manifest["annual_return_part_b_records"] = len(joined)
     manifest["annual_return_part_b_aligned_periods"] = len(aligned)
     manifest["annual_return_part_b_source"] = "CCEW publicextract.charity_annual_return_partb.zip"
