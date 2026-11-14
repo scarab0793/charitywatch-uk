@@ -45,8 +45,8 @@ def read_groups(folder, prefixes, kind):
             # Compare complete published profiles, not only displayed names.
             # The importer must write identical financial/Part B details into
             # both the name and registration-number lookup shards.
-            canonical = json.dumps(row, ensure_ascii=False, sort_keys=True, separators=(\",\", \":\"))
-            seen[number] = hashlib.sha256(canonical.encode(\"utf-8\")).hexdigest()
+            canonical = json.dumps(row, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+            seen[number] = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
     return seen
 
 
