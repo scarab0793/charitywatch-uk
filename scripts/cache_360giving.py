@@ -84,9 +84,8 @@ for org in ORG_IDS:
             "records_cached": len(all_rows), "reported_count": reported_total, "updated": True
         }
         print(f"{org} {direction}: {len(all_rows)} cached, {reported_total} reported")
-        time.sleep(0.65)
+        time.sleep(1.2)
 
-(OUT / "manifest.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
 successes = sum(bool(item.get("updated")) for item in summary["organisations"].values())
 summary["updated_directions"] = successes
 summary["status"] = "ok" if successes == len(summary["organisations"]) else ("partial" if successes else "unavailable")
