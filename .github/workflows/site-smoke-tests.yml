@@ -12,6 +12,9 @@ on:
       - 'scripts/test_refresh_regression.py'
       - 'scripts/check_ccew_archives.py'
       - 'scripts/test_ccew_archives.py'
+      - 'scripts/select_360giving_orgs.py'
+      - 'scripts/test_360giving_selection.py'
+      - 'scripts/cache_360giving.py'
       - 'tests/browser-smoke.html'
       - 'data/manifest-ew.json'
       - 'data/ew/**'
@@ -33,6 +36,9 @@ on:
       - 'scripts/test_refresh_regression.py'
       - 'scripts/check_ccew_archives.py'
       - 'scripts/test_ccew_archives.py'
+      - 'scripts/select_360giving_orgs.py'
+      - 'scripts/test_360giving_selection.py'
+      - 'scripts/cache_360giving.py'
       - 'tests/browser-smoke.html'
       - 'data/manifest-ew.json'
       - 'data/ew/**'
@@ -72,9 +78,11 @@ jobs:
         run: python3 scripts/test_refresh_regression.py
       - name: Test CCEW ZIP validation with synthetic source files
         run: python3 scripts/test_ccew_archives.py
+      - name: Test capped 360Giving charity selection
+        run: python3 scripts/test_360giving_selection.py
       - name: Check import and validation Python syntax
         run: |
-          python3 -m py_compile scripts/import_ccew.py scripts/enrich_ccew_finances.py scripts/build_salary_shards.py scripts/enrich_ccew_part_b.py scripts/build_grant_makers.py scripts/build_word_index.py scripts/verify_published_data.py scripts/verify_search_indexes.py scripts/test_search_indexes.py scripts/verify_refresh_regression.py scripts/test_refresh_regression.py scripts/check_ccew_archives.py scripts/test_ccew_archives.py
+          python3 -m py_compile scripts/import_ccew.py scripts/enrich_ccew_finances.py scripts/build_salary_shards.py scripts/enrich_ccew_part_b.py scripts/build_grant_makers.py scripts/build_word_index.py scripts/verify_published_data.py scripts/verify_search_indexes.py scripts/test_search_indexes.py scripts/verify_refresh_regression.py scripts/test_refresh_regression.py scripts/check_ccew_archives.py scripts/test_ccew_archives.py scripts/select_360giving_orgs.py scripts/cache_360giving.py scripts/test_360giving_selection.py
       - name: Open real charity profile and search in headless Chrome
         run: |
           set -e
