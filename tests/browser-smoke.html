@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>CharityWatch browser smoke</title></head>
+<body><h1>CharityWatch browser smoke</h1><output id="result" data-test-result="RUNNING">RUNNING</output>
+<iframe id="site" src="../index.html#charity/ew/802052" title="CharityWatch application" style="width:1100px;height:800px"></iframe>
+<script>
+const output=document.getElementById('result');
+const frame=document.getElementById('site');
+const started=Date.now();
+let stage=0;
+function fail(reason){output.dataset.testResult='FAIL';output.textContent='FAIL: '+reason;clearInterval(tick);}
+function pass(){output.dataset.testResult='PASS';output.textContent='PASS: direct charity profile, CEO pay, Part A salary bands and registration number search';clearInterval(tick);}
+const tick=setInterval(()=>{
+ try{
+  if(Date.now()-started>25000)return fail('timed out at stage '+stage);
+  const doc=frame.contentDocument;
+  if(!doc||!doc.getElementById('profileBody'))return;
+  if(stage===0){
+   const meta=doc.getElementById('profileMeta')?.textContent||'';
+   const body=doc.getElementById('profileBody')?.textContent||'';
+   if(!meta.includes('802052')||!body.includes('165,695'))return;
+   if(!body.includes('£60,001')||!body.includes('Pay and staff remuneration'))return;
+   stage=1;
+   doc.getElementById('q').value='802052';
+   doc.getElementById('searchForm').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));
+   return;
+  }
+  if(stage===1){
+   const results=doc.getElementById('results')?.textContent||'';
+   if(!results.includes('BBC CHILDREN IN NEED')||!results.includes('165,695'))return;
+   if(!doc.querySelector('#resultCards button[data-profile="802052"]'))return fail('Search result profile button missing');
+   pass();
+  }
+ }catch(err){fail(err.message);}
+},300);
+</script></body></html>
