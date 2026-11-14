@@ -1,9 +1,5 @@
 name: Import CCEW expenditure and reserves (Part B)
 on:
-  push:
-    paths:
-      - '.github/workflows/import-ccew-part-b.yml'
-      - 'scripts/enrich_ccew_part_b.py'
   workflow_dispatch:
 permissions:
   contents: write
