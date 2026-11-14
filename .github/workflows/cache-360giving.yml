@@ -59,11 +59,20 @@ jobs:
           # branch changed between checkout and publication.
           mkdir -p /tmp/charitywatch-grants
           cp -a data/360giving/. /tmp/charitywatch-grants/
+          # A queued older run must not publish data collected under obsolete
+          # selection/validation code after the default branch has changed.
+          collector_fingerprint=$(sha256sum scripts/cache_360giving.py scripts/select_360giving_orgs.py scripts/validate_360giving_api_page.py scripts/validate_360giving_sample.py .github/workflows/cache-360giving.yml | sha256sum | cut -d' ' -f1)
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           for attempt in 1 2 3; do
             git fetch origin main
             git reset --hard origin/main
+            latest_fingerprint=$(sha256sum scripts/cache_360giving.py scripts/select_360giving_orgs.py scripts/validate_360giving_api_page.py scripts/validate_360giving_sample.py .github/workflows/cache-360giving.yml | sha256sum | cut -d' ' -f1)
+            if [ "$latest_fingerprint" != "$collector_fingerprint" ]; then
+              echo "Collector or validation code changed after checkout; skipping stale snapshot publication."
+              echo "Skipped stale snapshot publication after collector code changed." >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
             mkdir -p data/360giving
             # Mirror the validated snapshot exactly, including deletions of
             # outdated pages. Plain cp -a would retain obsolete JSON pages.
