@@ -37,6 +37,11 @@ with tempfile.TemporaryDirectory() as temporary:
     second.unlink()
     assert any("missing/invalid page" in e for e in validate(root))
     second.write_text(json.dumps({"results": sample[20:]}), encoding="utf-8")
+    first = root / f"{org}-{direction}-p1.json"
+    first.write_text(json.dumps({"results": sample[:19]}), encoding="utf-8")
+    assert any("non-final page has incorrect length" in e for e in validate(root))
+    first.write_text(json.dumps({"results": sample[:20]}), encoding="utf-8")
+    assert not validate(root), "Restored pages rejected"
     snapshot["pages"] = ["../other.json"]
     metadata.write_text(json.dumps(snapshot), encoding="utf-8")
     assert any("invalid snapshot page references" in e for e in validate(root))
