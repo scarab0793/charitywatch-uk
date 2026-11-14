@@ -90,6 +90,20 @@ with tempfile.TemporaryDirectory() as tmp:
     assert any("skipped-row statistics" in message for message in validate(folder))
     manifest["organisations"][key]["skipped_invalid"]=2
     path.write_text(json.dumps(manifest),encoding="utf-8")
+    # A corrupt selection list must return validation errors, never crash.
+    manifest["selected_organisations"]=[["invalid", "nested"]]
+    path.write_text(json.dumps(manifest),encoding="utf-8")
+    assert any("Invalid selected organisation list" in message for message in validate(folder))
+    manifest.pop("selected_organisations")
+    path.write_text(json.dumps(manifest),encoding="utf-8")
+    # A non-string manifest key must be rejected without regular-expression errors.
+    manifest["organisations"]["invalid:key"]={"updated":False}
+    manifest["status"]="partial"
+    path.write_text(json.dumps(manifest),encoding="utf-8")
+    assert any("Malformed organisation-direction entry" in message for message in validate(folder))
+    manifest["organisations"].pop("invalid:key")
+    manifest["status"]="ok"
+    path.write_text(json.dumps(manifest),encoding="utf-8")
     snapshot["results"].append({"grant_id":"test","data":{"id":"test"}})
     snapshot["records_cached"]=2
     manifest["organisations"][key]["records_cached"]=2
