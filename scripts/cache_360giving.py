@@ -28,8 +28,11 @@ summary = {"updated_utc": datetime.datetime.now(datetime.timezone.utc).isoformat
 for org in ORG_IDS:
     for direction in DIRECTIONS:
         all_rows = []
+        seen_grants = set()
         reported_total = None
         error = None
+        skipped_invalid = 0
+        skipped_duplicates = 0
         for page in range(MAX_PAGES):
             offset = page * PER_PAGE
             endpoint = f"https://api.threesixtygiving.org/api/v1/org/{org}/grants_{direction}/?limit={PER_PAGE}&offset={offset}"
@@ -54,13 +57,23 @@ for org in ORG_IDS:
                 if isinstance(total, int) and total >= 0:
                     reported_total = total
                 for row in payload["results"]:
-                    if isinstance(row, dict) and isinstance(row.get("data"), dict):
-                        all_rows.append({
-                            "grant_id": row.get("grant_id"),
-                            "data": row["data"],
-                            "publisher": row.get("publisher"),
-                            "data_license": row.get("data_license"),
-                        })
+                    if not isinstance(row, dict) or not isinstance(row.get("data"), dict):
+                        skipped_invalid += 1
+                        continue
+                    grant_id = row.get("grant_id") or row["data"].get("id")
+                    if not isinstance(grant_id, str) or not grant_id.strip():
+                        skipped_invalid += 1
+                        continue
+                    if grant_id in seen_grants:
+                        skipped_duplicates += 1
+                        continue
+                    seen_grants.add(grant_id)
+                    all_rows.append({
+                        "grant_id": grant_id,
+                        "data": row["data"],
+                        "publisher": row.get("publisher"),
+                        "data_license": row.get("data_license"),
+                    })
                 if not payload.get("next") or not payload["results"]:
                     break
                 time.sleep(1.2)
@@ -78,14 +91,19 @@ for org in ORG_IDS:
             "retrieved_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
             "reported_count": reported_total,
             "records_cached": len(all_rows),
-            "partial": reported_total is None or len(all_rows) < reported_total,
+            "partial": reported_total is None or len(all_rows) < reported_total
+                       or skipped_invalid > 0 or skipped_duplicates > 0,
+            "skipped_invalid": skipped_invalid,
+            "skipped_duplicates": skipped_duplicates,
             "api_url": f"https://api.threesixtygiving.org/api/v1/org/{org}/grants_{direction}/?limit=20&offset=0",
             "results": all_rows,
         }
         path = OUT / f"{org}-{direction}.json"
         path.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
         summary["organisations"][f"{org}:{direction}"] = {
-            "records_cached": len(all_rows), "reported_count": reported_total, "updated": True
+            "records_cached": len(all_rows), "reported_count": reported_total,
+            "skipped_invalid": skipped_invalid, "skipped_duplicates": skipped_duplicates,
+            "updated": True
         }
         print(f"{org} {direction}: {len(all_rows)} cached, {reported_total} reported")
         time.sleep(1.2)
