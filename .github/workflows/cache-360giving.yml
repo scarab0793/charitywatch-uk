@@ -19,6 +19,8 @@ jobs:
           python-version: '3.12'
       - name: Retrieve selected organisation grant awards
         run: python scripts/cache_360giving.py
+      - name: Validate all successfully refreshed award snapshots
+        run: python scripts/verify_360giving_cache.py
       - name: Summarise cache health
         run: |
           python - <<'PY'
@@ -29,9 +31,9 @@ jobs:
           message=f"360Giving refresh: {label} ({m['updated_directions']} of {len(m['organisations'])} directions refreshed)"
           print(message)
           with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as out:
-              out.write('### '+message+'\\n')
+              out.write('### '+message+'\n')
               if label!='ok':
-                  out.write('Some sources were unavailable; existing cache files were retained.\\n')
+                  out.write('Some sources were unavailable; existing cache files were retained.\n')
           PY
       - name: Commit checked public grant snapshots safely
         run: |
