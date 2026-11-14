@@ -1,8 +1,5 @@
 name: Import official England and Wales charity register
 on:
-  push:
-    paths:
-      - '.github/workflows/import-ccew.yml'
   schedule:
     - cron: '17 4 * * 1'
   workflow_dispatch:
