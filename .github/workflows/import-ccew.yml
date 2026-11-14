@@ -190,12 +190,12 @@ jobs:
               ("Commit and publish", "PUBLISH_RESULT"),
           ]
           with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as out:
-              out.write("## CharityWatch official data import failed\\n\\n")
-              out.write("| Step | Result |\\n|---|---|\\n")
+              out.write("## CharityWatch official data import failed\n\n")
+              out.write("| Step | Result |\n|---|---|\n")
               for label, key in steps:
                   result = os.environ.get(key, "unknown")
-                  out.write(f"| {label} | {result} |\\n")
-              out.write("\\nPreviously published data remains unchanged unless the publication step succeeded.\\n")
+                  out.write(f"| {label} | {result} |\n")
+              out.write("\nPreviously published data remains unchanged unless the publication step succeeded.\n")
           print("Failed steps:", [(label, os.environ.get(key)) for label, key in steps if os.environ.get(key) == "failure"])
           PY
       - name: Upload import failure diagnostics
