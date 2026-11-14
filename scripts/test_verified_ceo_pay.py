@@ -9,7 +9,7 @@ from urllib.parse import urlsplit
 
 source = json.loads(Path("data/verified-ceo-pay.json").read_text(encoding="utf-8"))
 records = source["records"]
-allowed = {"gross_pay", "emoluments", "salary_benefits_employer_ni", "annual_salary", "total_remuneration"}
+allowed = {"gross_pay", "emoluments", "salary_benefits_employer_ni", "annual_salary", "total_remuneration", "aggregate_employee_benefits"}
 assert isinstance(records, dict) and records, "Missing verified CEO records"
 for key, charity in records.items():
     assert re.fullmatch(r"(ew|sc|ni):[0-9]{4,9}", key), key
@@ -30,4 +30,12 @@ for key, charity in records.items():
         assert isinstance(record.get("source_label"), str) and record["source_label"].strip(), key
         if "page" in record:
             assert type(record["page"]) is int and record["page"] >= 1, key
+        components = ["salary", "employer_ni", "employer_pension", "other_benefits"]
+        supplied = [field for field in components if field in record]
+        if supplied:
+            assert charity["basis_category"] == "aggregate_employee_benefits", key
+            assert len(supplied) == len(components), key
+            for field in components:
+                assert type(record[field]) in (int, float) and math.isfinite(record[field]) and record[field] >= 0, (key, field)
+            assert abs(sum(record[field] for field in components) - record["amount"]) < 0.01, key
 print(f"PASS: {len(records)} sourced CEO remuneration records have explicit pay definitions")
