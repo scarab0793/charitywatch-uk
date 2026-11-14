@@ -19,7 +19,8 @@ def previous_404s(manifest_path):
         entries = manifest.get("organisations", {})
         if not isinstance(entries, dict):
             return []
-        failed = set()
+        stored = manifest.get("unavailable_organisations", [])
+        failed = {org for org in stored if isinstance(org, str) and re.fullmatch(r"GB-CHC-[0-9]{4,9}", org)} if isinstance(stored, list) else set()
         for key, value in entries.items():
             if not isinstance(key, str) or not isinstance(value, dict):
                 continue
