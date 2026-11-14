@@ -52,7 +52,7 @@ def validate(root):
         reported = snap.get("reported_count")
         if snap.get("organisation_id") != org or snap.get("direction") != direction:
             errors.append(key + ": snapshot organisation/direction mismatch")
-        if not isinstance(rows, list) or not isinstance(n, int) or n != len(rows) or n > limit:
+        if not isinstance(rows, list) or type(n) is not int or n < 0 or n != len(rows) or n > limit:
             errors.append(key + ": snapshot record count mismatch or over limit")
         if detail.get("records_cached") != n or detail.get("reported_count") != reported:
             errors.append(key + ": manifest snapshot counts disagree")
@@ -68,11 +68,11 @@ def validate(root):
             usable = [v for v in ids if isinstance(v, str) and v.strip()]
             if len(usable) != len(rows) or len(set(usable)) != len(usable):
                 errors.append(key + ": missing or duplicate grant identifiers")
-        if reported is not None and (not isinstance(reported, int) or isinstance(reported, bool) or not isinstance(n, int) or reported < n):
+        if reported is not None and (type(reported) is not int or reported < 0 or type(n) is not int or reported < n):
             errors.append(key + ": reported total below stored records")
         if not isinstance(rows, list) or any(not isinstance(row, dict) or not isinstance(row.get("data"), dict) for row in rows):
             errors.append(key + ": malformed award rows")
-        if isinstance(n, int) and isinstance(reported, (int, type(None))) and snap.get("partial") != (reported is None or n < reported or invalid > 0 or duplicates > 0):
+        if type(n) is int and (reported is None or type(reported) is int) and snap.get("partial") != (reported is None or n < reported or invalid > 0 or duplicates > 0):
             errors.append(key + ": incomplete-data flag is inaccurate")
         try:
             datetime.datetime.fromisoformat(snap["retrieved_utc"])
