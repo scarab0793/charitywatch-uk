@@ -19,7 +19,7 @@ const cwGrantCard=(row,direction)=>{
  const g=row?.data;
  if(!g||typeof g!=='object')return '';
  const who=direction==='made'?g.recipientOrganization?.[0]:g.fundingOrganization?.[0];
- const orgName=who?.name||'Recipient organisation not stated';
+ const orgName=who?.name||(direction==='made'?'Recipient organisation not stated':'Funding organisation not stated');
  const award=g.amountAwarded;
  const orgId=who?.id||'';
  const registered=/^GB-CHC-(\d{4,9})$/.exec(orgId);
@@ -29,9 +29,15 @@ const cwGrantCard=(row,direction)=>{
  const source=cwGrantSourceLink(g.dataSource);
  return '<article class="grant-award"><b>'+heading+'</b><strong>'+amount+'</strong><p class="small muted">Awarded '+cwGrantEscape(g.awardDate||'date not published')+' · '+cwGrantEscape(g.title||'Grant')+'</p>'+(g.description?'<p class="small">'+cwGrantEscape(g.description).slice(0,450)+'</p>':'')+'<p class="small muted">Grant ID: '+cwGrantEscape(g.id||row.grant_id||'Not provided')+(source?' · '+source:'')+'</p></article>';
 };
-const cwGrantControls=(region,number)=>{
+const cwGrantAccounting=partB=>{
+ const amount=partB?.expenditure_grants_institution;
+ const value=Number.isFinite(amount)?cwGrantMoney(amount):'Not disclosed';
+ const period=partB?.period_end||'Not available';
+ return '<div class="grant-accounting"><div class="grant-accounting-col"><span class="small muted">Charity Commission Part B</span><strong>'+value+'</strong><p class="small muted">Grants to institutions reported as expenditure · period ending '+cwGrantEscape(period)+'</p></div><div class="grant-accounting-col"><span class="small muted">360Giving published awards</span><strong id="grantAwardSummary">Not queried</strong><p id="grantAwardComparisonNote" class="small muted">Click below to retrieve grant-award records. An award is not necessarily a payment. The two sources have different coverage and reporting dates.</p></div></div>';
+};
+const cwGrantControls=(region,number,partB)=>{
  if(region!=='ew'||!/^\d{4,9}$/.test(String(number)))return '';
- return '<section class="grant-details" id="grant-awards"><h3>Published grant awards and recipients</h3><p class="small muted">Source: 360Giving open data, published by grantmakers. <strong>Amount awarded is not necessarily money paid.</strong> This dataset is separate from Charity Commission Part B expenditure and may cover different years. Coverage is incomplete. The API is queried only when you click.</p><div class="comparison-actions"><button type="button" id="grantMade" data-grant-direction="made">Grants awarded by this charity</button><button type="button" id="grantReceived" data-grant-direction="received">Grants awarded to this charity</button></div><p id="grantAwardStatus" class="small muted" aria-live="polite">Choose a direction to look for published awards.</p><div id="grantAwardRows" class="grant-awards"></div><button type="button" id="grantAwardsMore" hidden>Load 20 more awards</button><p class="small muted">If the API cannot be accessed from this browser, use the direct 360Giving links shown in the error message. The platform does not claim complete tracing of payments.</p></section>';
+ return '<section class="grant-details" id="grant-awards"><h3>Published grant awards and recipients</h3><p class="small muted">Source: 360Giving open data, published by grantmakers. <strong>Amount awarded is not necessarily money paid.</strong> This dataset is separate from Charity Commission Part B expenditure and may cover different years. Coverage is incomplete. The API is queried only when you click.</p>'+cwGrantAccounting(partB)+'<div class="comparison-actions"><button type="button" id="grantMade" data-grant-direction="made">Grants awarded by this charity</button><button type="button" id="grantReceived" data-grant-direction="received">Grants awarded to this charity</button></div><p id="grantAwardStatus" class="small muted" aria-live="polite">Choose a direction to look for published awards.</p><div id="grantAwardRows" class="grant-awards"></div><button type="button" id="grantAwardsMore" hidden>Load 20 more awards</button><p class="small muted">If the API cannot be accessed from this browser, use the direct 360Giving links shown in the error message. The platform does not claim complete tracing of payments.</p></section>';
 };
 const cwGrantBinder=(region,number)=>{
  const box=document.getElementById('grant-awards');
@@ -49,7 +55,7 @@ const cwGrantBinder=(region,number)=>{
   status.textContent='Checking published grants…';
   try{
    const response=await fetch(url,{headers:{Accept:'application/json'}});
-   if(response.status===404){rows.innerHTML='';status.textContent='No organisation record was found in the 360Giving dataset. This does not mean the charity has no grants.';return;}
+   if(response.status===404){rows.innerHTML='';const summary=document.getElementById('grantAwardSummary');if(summary)summary.textContent='Organisation not found';status.textContent='No organisation record was found in the 360Giving dataset. This does not mean the charity has no grants.';return;}
    if(!response.ok)throw Error('360Giving returned HTTP '+response.status);
    const payload=await response.json();
    if(token!==request||!Array.isArray(payload.results))return;
@@ -58,6 +64,10 @@ const cwGrantBinder=(region,number)=>{
    rows.insertAdjacentHTML('beforeend',cards.join(''));
    offset+=payload.results.length;
    const total=typeof payload.count==='number'?payload.count:null;
+   const summary=document.getElementById('grantAwardSummary');
+   const note=document.getElementById('grantAwardComparisonNote');
+   if(summary)summary.textContent=total===null?'Published awards count unavailable':total.toLocaleString('en-GB')+' published '+(direction==='made'?'outgoing':'incoming')+' awards';
+   if(note)note.textContent='360Giving award counts cover all published periods, not the single Charity Commission accounting period. Values should not be subtracted or reconciled as payments.';
    status.textContent=(total!==null?total.toLocaleString('en-GB')+' published awards':'Published awards')+' · '+offset+' records loaded. Reporting coverage is not exhaustive.';
    if(!cards.length&&reset)rows.innerHTML='<p class="muted">No published organisation grants found for this query.</p>';
    more.hidden=!payload.next||payload.results.length===0;
@@ -71,6 +81,7 @@ const cwGrantBinder=(region,number)=>{
    if(loading)return;
    direction=button.dataset.grantDirection;
    offset=0;rows.innerHTML='';
+   const summary=document.getElementById('grantAwardSummary');if(summary)summary.textContent='Loading…';
    fetchPage(true);
   });
  }
