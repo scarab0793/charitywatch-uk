@@ -6,6 +6,8 @@ on:
       - 'scripts/verify_360giving_cache.py'
       - 'scripts/test_360giving_cache.py'
       - 'scripts/cache_360giving.py'
+      - 'scripts/validate_360giving_api_page.py'
+      - 'scripts/test_360giving_api_pages.py'
       - 'scripts/test_360giving_collection_config.py'
       - 'scripts/test_360giving_pages.py'
       - 'assets/grant-links.js'
@@ -16,6 +18,8 @@ on:
       - 'scripts/verify_360giving_cache.py'
       - 'scripts/test_360giving_cache.py'
       - 'scripts/cache_360giving.py'
+      - 'scripts/validate_360giving_api_page.py'
+      - 'scripts/test_360giving_api_pages.py'
       - 'scripts/test_360giving_collection_config.py'
       - 'scripts/test_360giving_pages.py'
       - 'data/360giving/**'
@@ -40,6 +44,8 @@ jobs:
         run: node --check assets/grant-links.js
       - name: Check collector limits
         run: python3 scripts/test_360giving_collection_config.py
+      - name: Test API pagination response validation
+        run: python3 scripts/test_360giving_api_pages.py
       - name: Run offline consistency tests
         run: python3 scripts/test_360giving_cache.py
       - name: Test paged snapshots and migration compatibility
