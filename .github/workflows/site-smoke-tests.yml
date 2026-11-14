@@ -42,7 +42,7 @@ jobs:
         run: python3 scripts/test_ccew_archives.py
       - name: Check import and validation Python syntax
         run: |
-          python3 -m py_compile scripts/import_ccew.py scripts/enrich_ccew_finances.py scripts/build_salary_shards.py scripts/enrich_ccew_part_b.py scripts/build_grant_makers.py scripts/build_word_index.py scripts/verify_published_data.py
+          python3 -m py_compile scripts/import_ccew.py scripts/enrich_ccew_finances.py scripts/build_salary_shards.py scripts/enrich_ccew_part_b.py scripts/build_grant_makers.py scripts/build_word_index.py scripts/verify_published_data.py scripts/check_ccew_archives.py scripts/test_ccew_archives.py
       - name: Open real charity profile and search in headless Chrome
         run: |
           set -e
