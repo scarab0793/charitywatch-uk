@@ -36,3 +36,46 @@ const cwCEOChart=entry=>{
  points.forEach((p,i)=>{shapes+='<circle cx="'+x(i)+'" cy="'+y(p.amount)+'" r="5" fill="#0866a4" stroke="#fff" stroke-width="2"><title>'+escapeHTML(p.period_end+': '+money(p.amount))+'</title></circle><text x="'+x(i)+'" y="'+(H-B+24)+'" text-anchor="middle" class="chart-axis">'+escapeHTML(p.period_end.slice(0,7))+'</text>';});
  return '<div class="chart-wrap"><h4>Verified CEO remuneration history</h4><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="CEO remuneration by reporting period">'+shapes+'</svg><p class="chart-caption">Nominal GBP. Vertical axis may start above zero; consult the exact values and annual-report links below. Remuneration definitions may differ between charities.</p></div>';
 };
+
+/* Shared annual comparison: labels are financial-period END years, not
+ * identical accounting periods. Missing observations are gaps. */
+const cwComparisonChart=(records,metric)=>{
+ const chosen=['income','expenditure'].includes(metric)?metric:'income';
+ const colors=['#0b6aa8','#d1822f','#567c3a'];
+ const series=(records||[]).slice(0,3).map((r,i)=>{
+  const periods=Array.isArray(r.history)&&r.history.length?r.history:[{year:r.year,income:r.income,expenditure:r.expenditure}];
+  const years=new Map();
+  for(const p of periods){
+   const end=String(p.year||'').slice(0,10),y=end.slice(0,4),value=p[chosen];
+   if(!/^\\d{4}$/.test(y)||!Number.isFinite(value)||value<0)continue;
+   const prior=years.get(y);
+   if(!prior||end>prior.date)years.set(y,{date:end,value});
+  }
+  return {name:r.name,number:r.number,color:colors[i],years};
+ });
+ const allYears=[...new Set(series.flatMap(s=>[...s.years.keys()]))].sort().slice(-8);
+ if(!allYears.length)return '<p class="chart-empty">No usable financial history for the selected charities.</p>';
+ const n=series.reduce((sum,s)=>sum+allYears.filter(y=>s.years.has(y)).length,0);
+ if(n<2)return '<p class="chart-empty">At least two reported financial periods are required for a comparison chart.</p>';
+ const max=Math.max(1,...series.flatMap(s=>allYears.map(y=>s.years.get(y)?.value).filter(v=>Number.isFinite(v))));
+ const W=780,H=300,L=85,R=22,T=25,B=68,base=H-B,PH=base-T;
+ const slot=(W-L-R)/allYears.length,barW=Math.min(24,slot/Math.max(3,series.length+1)),clusters=series.length;
+ let svg='';
+ for(let step=0;step<=4;step++){
+  const y=T+step*PH/4;
+  svg+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y+'" y2="'+y+'" stroke="#dce7f0"/><text x="'+(L-7)+'" y="'+(y+4)+'" text-anchor="end" class="chart-axis">'+chartAmt(max*(1-step/4))+'</text>';
+ }
+ allYears.forEach((year,i)=>{
+  const mid=L+(i+.5)*slot;
+  series.forEach((serie,j)=>{
+   const point=serie.years.get(year);
+   if(!point)return;
+   const h=point.value/max*PH,x=mid+(j-(clusters-1)/2)*(barW+3)-barW/2;
+   svg+='<rect x="'+x+'" y="'+(base-h)+'" width="'+barW+'" height="'+Math.max(1,h)+'" rx="2" fill="'+serie.color+'"><title>'+escapeXML(serie.name)+' — period ending '+escapeXML(point.date)+': '+escapeXML(chartAmt(point.value))+'</title></rect>';
+  });
+  svg+='<text x="'+mid+'" y="'+(base+22)+'" text-anchor="middle" class="chart-axis">'+year+'</text>';
+ });
+ const legend=series.map(s=>'<span><i class="chart-key" style="background:'+s.color+'"></i>'+escapeXML(s.name)+'</span>').join('');
+ return '<div class="chart-wrap"><h4>'+ (chosen==='income'?'Gross annual income':'Gross annual expenditure')+' by financial year-end</h4><svg role="img" aria-label="Comparison of '+(chosen==='income'?'income':'expenditure')+' across selected charities and financial years" viewBox="0 0 '+W+' '+H+'">'+svg+'</svg><div class="chart-legend">'+legend+'</div><p class="chart-caption">GBP, nominal. Years indicate the calendar year in which the accounts end; charities may have different year-end dates and reporting periods. Exact dates and amounts are available by hovering over bars. Missing periods are left blank, not shown as zero. If more than one period ends in the same year, the latest is shown.</p></div>';
+};
+const escapeXML=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
