@@ -42,7 +42,7 @@ def read_groups(folder, prefixes, kind):
                 raise ValueError(f"{kind}: {number} stored in {prefix}, expected {match}")
             if number in seen:
                 raise ValueError(f"{kind}: duplicate registration {number}")
-            seen[number] = name
+            # Compare complete published profiles, not only displayed names.\n            # The importer must write identical financial/Part B details into\n            # both the name and registration-number lookup shards.\n            canonical = json.dumps(row, ensure_ascii=False, sort_keys=True, separators=(\",\", \":\"))\n            seen[number] = hashlib.sha256(canonical.encode(\"utf-8\")).hexdigest()
     return seen
 
 
@@ -60,8 +60,8 @@ def check(root, minimum=100000):
         if missing:
             raise ValueError(f"Index mismatch: {len(missing)} registrations missing in one index")
         different = sum(names[k] != numbers[k] for k in names)
-        raise ValueError(f"Name mismatch for {different} registrations between indexes")
-    print(f"PASS: {expected:,} registered charities are identical in name and registration search indexes")
+        raise ValueError(f"Profile mismatch for {different} registrations between indexes")
+    print(f"PASS: {expected:,} complete charity profiles are identical in name and registration search indexes")
 
 
 if __name__ == "__main__":
