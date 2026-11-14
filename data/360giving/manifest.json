@@ -1,5 +1,5 @@
 {
-  "updated_utc": "2026-11-14T12:48:02.463144+00:00",
+  "updated_utc": "2026-11-14T12:52:19.040437+00:00",
   "source": "360Giving official API; published awards, not confirmed payments",
   "max_records_per_org_direction": 100,
   "selected_organisations": [
@@ -8,12 +8,12 @@
     "GB-CHC-288701",
     "GB-CHC-210183",
     "GB-CHC-268369",
-    "GB-CHC-1046814",
-    "GB-CHC-1091043",
-    "GB-CHC-1115413",
-    "GB-CHC-1153551",
     "GB-CHC-1089464",
     "GB-CHC-1160024",
+    "GB-CHC-1036733",
+    "GB-CHC-1140097",
+    "GB-CHC-1162201",
+    "GB-CHC-1076822",
     "GB-CHC-1187301"
   ],
   "selection": "Three core profiles plus the largest reported CCEW institutional grant makers; sampled, not comprehensive",
@@ -88,38 +88,6 @@
       "skipped_duplicates": 0,
       "updated": true
     },
-    "GB-CHC-1046814:made": {
-      "error": "HTTPError: HTTP Error 404: Not Found",
-      "updated": false
-    },
-    "GB-CHC-1046814:received": {
-      "error": "HTTPError: HTTP Error 404: Not Found",
-      "updated": false
-    },
-    "GB-CHC-1091043:made": {
-      "error": "HTTPError: HTTP Error 404: Not Found",
-      "updated": false
-    },
-    "GB-CHC-1091043:received": {
-      "error": "HTTPError: HTTP Error 404: Not Found",
-      "updated": false
-    },
-    "GB-CHC-1115413:made": {
-      "error": "HTTPError: HTTP Error 404: Not Found",
-      "updated": false
-    },
-    "GB-CHC-1115413:received": {
-      "error": "HTTPError: HTTP Error 404: Not Found",
-      "updated": false
-    },
-    "GB-CHC-1153551:made": {
-      "error": "HTTPError: HTTP Error 404: Not Found",
-      "updated": false
-    },
-    "GB-CHC-1153551:received": {
-      "error": "HTTPError: HTTP Error 404: Not Found",
-      "updated": false
-    },
     "GB-CHC-1089464:made": {
       "records_cached": 0,
       "reported_count": 0,
@@ -148,6 +116,62 @@
       "skipped_duplicates": 0,
       "updated": true
     },
+    "GB-CHC-1036733:made": {
+      "records_cached": 100,
+      "reported_count": 135,
+      "skipped_invalid": 0,
+      "skipped_duplicates": 0,
+      "updated": true
+    },
+    "GB-CHC-1036733:received": {
+      "records_cached": 3,
+      "reported_count": 3,
+      "skipped_invalid": 0,
+      "skipped_duplicates": 0,
+      "updated": true
+    },
+    "GB-CHC-1140097:made": {
+      "records_cached": 0,
+      "reported_count": 0,
+      "skipped_invalid": 0,
+      "skipped_duplicates": 0,
+      "updated": true
+    },
+    "GB-CHC-1140097:received": {
+      "records_cached": 4,
+      "reported_count": 4,
+      "skipped_invalid": 0,
+      "skipped_duplicates": 0,
+      "updated": true
+    },
+    "GB-CHC-1162201:made": {
+      "records_cached": 0,
+      "reported_count": 0,
+      "skipped_invalid": 0,
+      "skipped_duplicates": 0,
+      "updated": true
+    },
+    "GB-CHC-1162201:received": {
+      "records_cached": 1,
+      "reported_count": 1,
+      "skipped_invalid": 0,
+      "skipped_duplicates": 0,
+      "updated": true
+    },
+    "GB-CHC-1076822:made": {
+      "records_cached": 0,
+      "reported_count": 0,
+      "skipped_invalid": 0,
+      "skipped_duplicates": 0,
+      "updated": true
+    },
+    "GB-CHC-1076822:received": {
+      "records_cached": 6,
+      "reported_count": 6,
+      "skipped_invalid": 0,
+      "skipped_duplicates": 0,
+      "updated": true
+    },
     "GB-CHC-1187301:made": {
       "error": "HTTPError: HTTP Error 404: Not Found",
       "updated": false
@@ -164,6 +188,6 @@
     "GB-CHC-1153551",
     "GB-CHC-1187301"
   ],
-  "updated_directions": 14,
+  "updated_directions": 22,
   "status": "partial"
 }
