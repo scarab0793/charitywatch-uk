@@ -80,6 +80,51 @@
       ],
       "caution": "This figure includes employer National Insurance and taxable benefits in kind, unlike gross pay at Oxfam. Employer pension contributions are excluded. WaterAid's later annual reports may contain newer figures.",
       "basis_category": "salary_benefits_employer_ni"
+    },
+    "ew:220949": {
+      "name": "BRITISH RED CROSS SOCIETY",
+      "measure": "Annual pay for the Chief Executive as disclosed in the executive leadership pay table; employer pension contributions separately described",
+      "basis_category": "annual_salary",
+      "currency": "GBP",
+      "periods": [
+        {
+          "period_end": "2024-12-31",
+          "amount": 183600,
+          "source_url": "https://assets.redcross.org.uk/82b1e254-5524-0172-0612-9ce813c7824c/76383c79-d417-47d6-b419-e53b0f4d5a2a/British-Red-Cross-Annual-Report-and-Accounts-2024.pdf",
+          "source_label": "British Red Cross Annual Report and Accounts 2024, governance information, chief executive annual pay table",
+          "page": 49
+        },
+        {
+          "period_end": "2023-12-31",
+          "amount": 180000,
+          "source_url": "https://assets.redcross.org.uk/82b1e254-5524-0172-0612-9ce813c7824c/76383c79-d417-47d6-b419-e53b0f4d5a2a/British-Red-Cross-Annual-Report-and-Accounts-2024.pdf",
+          "source_label": "2024 Annual Report and Accounts, 2023 comparative in CEO annual pay table",
+          "page": 49
+        }
+      ],
+      "caution": "Figures are the annual pay disclosed in the 2024 report, not the total cost of employment. Employer pension arrangements are described separately. A 2025 report exists; this catalogue has not yet verified its CEO pay figure."
+    },
+    "ew:1089464": {
+      "name": "CANCER RESEARCH UK",
+      "measure": "Chief Executive total remuneration as disclosed by the charity; pension contributions and benefits may be separately reported",
+      "basis_category": "total_remuneration",
+      "currency": "GBP",
+      "periods": [
+        {
+          "period_end": "2026-03-31",
+          "amount": 289800,
+          "source_url": "https://www.cancerresearchuk.org/about-us/our-organisation/annual-report-and-accounts",
+          "source_label": "Cancer Research UK Annual Report and Accounts 2025/26 landing page, CEO and staff salaries disclosure"
+        },
+        {
+          "period_end": "2025-03-31",
+          "amount": 288200,
+          "source_url": "https://downloads.ctfassets.net/u7vsjnoopqo5/5mIQtPIZ43jHIbMTdSfRYe/7323416c3007ecece1139df49cfc13de/Cancer_Research_UK_annual_report_and_accounts_2024-25.pdf",
+          "source_label": "Cancer Research UK Annual Report and Accounts 2024/25, note 9 key management personnel, total remuneration column",
+          "page": 87
+        }
+      ],
+      "caution": "The website calls the £289,800 for 2025/26 total remuneration. The 2024/25 accounts distinguish total remuneration (£288,200) from employer pension contributions and other benefits; do not compare these figures to total employer cost or salary figures at other charities."
     }
   }
 }
