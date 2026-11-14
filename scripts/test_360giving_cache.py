@@ -53,6 +53,25 @@ with tempfile.TemporaryDirectory() as tmp:
     manifest["organisations"][key]["reported_count"]=10
     path.write_text(json.dumps(manifest),encoding="utf-8")
     source.write_text(json.dumps(snapshot),encoding="utf-8")
+    # Python bool is an int subclass: never accept True as a record count.
+    snapshot["records_cached"]=True
+    source.write_text(json.dumps(snapshot),encoding="utf-8")
+    assert any("snapshot record count" in message for message in validate(folder))
+    snapshot["records_cached"]=1
+    snapshot["reported_count"]=True
+    manifest["organisations"][key]["reported_count"]=True
+    source.write_text(json.dumps(snapshot),encoding="utf-8")
+    path.write_text(json.dumps(manifest),encoding="utf-8")
+    assert any("reported total" in message for message in validate(folder))
+    snapshot["reported_count"]=-1
+    manifest["organisations"][key]["reported_count"]=-1
+    source.write_text(json.dumps(snapshot),encoding="utf-8")
+    path.write_text(json.dumps(manifest),encoding="utf-8")
+    assert any("reported total" in message for message in validate(folder))
+    snapshot["reported_count"]=10
+    manifest["organisations"][key]["reported_count"]=10
+    source.write_text(json.dumps(snapshot),encoding="utf-8")
+    path.write_text(json.dumps(manifest),encoding="utf-8")
     snapshot["results"].append({"grant_id":"test","data":{"id":"test"}})
     snapshot["records_cached"]=2
     manifest["organisations"][key]["records_cached"]=2
