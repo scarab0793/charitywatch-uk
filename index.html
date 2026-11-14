@@ -106,7 +106,7 @@ const loadGrants=async()=>{
   const data=await loadJson('data/grant-makers-ew.json');
   if(!Array.isArray(data.records)||!data.records.length)throw Error('No grant records');
   grantData=data.records;
-  const years=[...new Set(grantData.map(r=>String(r.period_end||'').slice(0,4)).filter(y=>/^\\d{4}$/.test(y)))].sort().reverse();
+  const years=[...new Set(grantData.map(r=>String(r.period_end||'').slice(0,4)).filter(y=>/^\d{4}$/.test(y)))].sort().reverse();
   $('grantYear').innerHTML='<option value="all">All reporting years</option>'+years.map(y=>'<option value="'+y+'">Year-end '+y+'</option>').join('');
   renderGrants(true);
  }catch(e){
