@@ -1,11 +1,5 @@
 name: Update CCEW detailed annual returns (Part A)
 on:
-  push:
-    paths:
-      - '.github/workflows/update-ccew-part-a.yml'
-      - 'scripts/enrich_ccew_part_a.py'
-      - 'scripts/build_salary_shards.py'
-      - 'scripts/verify_salary_shards.py'
   workflow_dispatch:
 permissions:
   contents: write
