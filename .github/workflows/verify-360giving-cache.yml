@@ -5,6 +5,7 @@ on:
     paths:
       - 'scripts/verify_360giving_cache.py'
       - 'scripts/test_360giving_cache.py'
+      - 'assets/grant-links.js'
       - 'data/360giving/**'
       - '.github/workflows/verify-360giving-cache.yml'
   pull_request:
@@ -29,6 +30,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Check grant explorer JavaScript syntax
+        run: node --check assets/grant-links.js
       - name: Run offline consistency tests
         run: python3 scripts/test_360giving_cache.py
       - name: Validate published snapshots if present
