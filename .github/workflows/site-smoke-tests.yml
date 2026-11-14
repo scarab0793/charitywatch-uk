@@ -9,6 +9,10 @@ on:
       - 'scripts/check_ccew_archives.py'
       - 'scripts/test_ccew_archives.py'
       - 'tests/browser-smoke.html'
+      - 'data/manifest-ew.json'
+      - 'data/grant-makers-ew.json'
+      - 'data/grant-makers-meta-ew.json'
+      - 'data/pay/ew/**'
       - 'data/verified-ceo-pay.json'
       - '.github/workflows/site-smoke-tests.yml'
   pull_request:
@@ -20,6 +24,10 @@ on:
       - 'scripts/check_ccew_archives.py'
       - 'scripts/test_ccew_archives.py'
       - 'tests/browser-smoke.html'
+      - 'data/manifest-ew.json'
+      - 'data/grant-makers-ew.json'
+      - 'data/grant-makers-meta-ew.json'
+      - 'data/pay/ew/**'
       - 'data/verified-ceo-pay.json'
   workflow_dispatch:
 permissions:
