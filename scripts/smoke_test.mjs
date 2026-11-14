@@ -14,7 +14,7 @@ assert.equal(inline.length,1,'Expected one inline application script');
 new vm.Script(charts,{filename:'assets/charts.js'});
 new vm.Script(grants,{filename:'assets/grant-links.js'});
 assert.ok(html.includes('assets/grant-links.js'),'360Giving grant viewer script not loaded');
-assert.ok(html.includes('cwGrantControls(region,record.number)'),'Published grant viewer missing from profiles');
+assert.ok(html.includes('cwGrantControls(region,record.number,record.annual_return_part_b)'),'Published grant viewer missing from profiles');
 assert.ok(html.includes('cwGrantBinder(region,record.number)'),'Published grants controls are not wired');
 new vm.Script(inline[0],{filename:'index.html:inline'});
 for(const id of ['searchForm','q','region','results','suggestions','charityProfile',
@@ -60,6 +60,8 @@ if(cwGrantEndpoint('ew','802052','invalid')!==null)throw Error('Invalid grant di
 const result=cwGrantCard({data:{recipientOrganization:[{name:'Sample Recipient',id:'GB-CHC-123456'}],amountAwarded:1000,currency:'GBP',awardDate:'2025-01-01',title:'Sample award',dataSource:'https://example.org/data.csv'}},'made');
 if(!result.includes('Sample Recipient')||!result.includes('£1,000')||!result.includes('Grant ID'))throw Error('Grant attribution failed');
 if(result.includes('money paid'))throw Error('Award incorrectly represented as paid amount');
+const panel=cwGrantControls('ew','802052',{period_end:'2025-06-30',expenditure_grants_institution:240000});
+if(!panel.includes('£240,000')||!panel.includes('Part B')||!panel.includes('Not queried'))throw Error('Part B grant comparison missing');
 `;
 new vm.Script(grantTest,{filename:'grant-tests'}).runInContext(context);
 const pay=JSON.parse(fs.readFileSync('data/verified-ceo-pay.json','utf8'));
