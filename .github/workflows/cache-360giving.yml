@@ -17,6 +17,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Test page layout and cache consistency before collecting
+        run: |
+          python scripts/test_360giving_collection_config.py
+          python scripts/test_360giving_pages.py
+          python scripts/test_360giving_cache.py
       - name: Retrieve selected organisation grant awards
         run: python scripts/cache_360giving.py
       - name: Validate all successfully refreshed award snapshots
