@@ -11,11 +11,13 @@ import time
 import urllib.error
 import urllib.request
 from pathlib import Path
-from select_360giving_orgs import select_organisations
+from select_360giving_orgs import select_organisations, previous_404s
 from validate_360giving_api_page import validate_page
 from validate_360giving_sample import validate_sample
 
 ORG_IDS = select_organisations()
+# Persist unavailable sources even when rotation temporarily excludes them.
+UNAVAILABLE = set(previous_404s(Path("data/360giving/manifest.json")))
 DIRECTIONS = ("made", "received")
 PER_PAGE = 20
 MAX_PAGES = 5
@@ -89,6 +91,8 @@ for org in ORG_IDS:
         if error:
             print(f"Could not update {org}/{direction}: {error}")
             summary["organisations"][f"{org}:{direction}"] = {"error": error, "updated": False}
+            if "HTTP Error 404" in error:
+                UNAVAILABLE.add(org)
             continue
         data = {
             "organisation_id": org, "direction": direction,
@@ -121,6 +125,8 @@ for org in ORG_IDS:
         for old_page in OUT.glob(f"{org}-{direction}-p*.json"):
             if old_page.name not in page_names:
                 old_page.unlink()
+        # Remove from the unavailable history when a previous 404 source recovers.
+        UNAVAILABLE.discard(org)
         summary["organisations"][f"{org}:{direction}"] = {
             "records_cached": len(all_rows), "reported_count": reported_total,
             "skipped_invalid": skipped_invalid, "skipped_duplicates": skipped_duplicates,
@@ -130,6 +136,7 @@ for org in ORG_IDS:
         time.sleep(1.2)
 
 successes = sum(bool(item.get("updated")) for item in summary["organisations"].values())
+summary["unavailable_organisations"] = sorted(UNAVAILABLE)
 summary["updated_directions"] = successes
 summary["status"] = "ok" if successes == len(summary["organisations"]) else ("partial" if successes else "unavailable")
 (OUT / "manifest.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
