@@ -46,10 +46,10 @@ def read_groups(folder, prefixes, kind):
     return seen
 
 
-def check(root):
+def check(root, minimum=100000):
     manifest = json.loads((root / "manifest-ew.json").read_text(encoding="utf-8"))
     expected = manifest.get("count", 0)
-    if expected < 100000:
+    if expected < minimum:
         raise ValueError("Implausibly low charity count")
     names = read_groups(root / "ew", manifest.get("shards", []), "name")
     numbers = read_groups(root / "ew" / "numbers", manifest.get("number_shards", []), "number")
