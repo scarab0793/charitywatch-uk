@@ -68,4 +68,39 @@ await flush();
 assert.match(node('grantAwardRows').innerHTML,/NEW OUTGOING AWARD/);
 assert.doesNotMatch(node('grantAwardRows').innerHTML,/STALE INCOMING AWARD/);
 assert.match(node('grantAwardSummary').textContent,/outgoing awards/);
-console.log('PASS: stale 360Giving responses cannot overwrite the latest selected grant direction');
+outgoing.listeners.click();
+deferred.get('made')({
+  ok:true,
+  json:async()=>({
+    direction:'made', organisation_id:'GB-CHC-802052', records_cached:0,
+    reported_count:0, partial:false, retrieved_utc:'2026-11-14T00:00:00+00:00', results:[],
+  }),
+});
+await flush();
+assert.match(node('grantAwardStatus').textContent,/reports zero published awards/);
+assert.equal(node('grantAwardRows').innerHTML,'');
+
+incoming.listeners.click();
+deferred.get('received')({
+  ok:true,
+  json:async()=>({
+    direction:'received', organisation_id:'GB-CHC-802052', records_cached:0,
+    reported_count:25, partial:true, retrieved_utc:'2026-11-14T00:00:00+00:00', results:[],
+  }),
+});
+await flush();
+assert.match(node('grantAwardStatus').textContent,/coverage is incomplete/);
+
+outgoing.listeners.click();
+deferred.get('made')({
+  ok:true,
+  json:async()=>({
+    direction:'made', organisation_id:'GB-CHC-999999', records_cached:1,
+    reported_count:1, partial:false, results:[{data:{title:'MISMATCHED GRANT'}}],
+  }),
+});
+await flush();
+assert.match(node('grantAwardStatus').innerHTML,/no current local award snapshot/);
+assert.doesNotMatch(node('grantAwardRows').innerHTML,/MISMATCHED GRANT/);
+console.log('PASS: stale responses, genuine zero awards, partial snapshots and mismatched charity identity');
+
