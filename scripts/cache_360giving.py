@@ -12,6 +12,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 from select_360giving_orgs import select_organisations
+from validate_360giving_api_page import validate_page
 
 ORG_IDS = select_organisations()
 DIRECTIONS = ("made", "received")
@@ -51,19 +52,7 @@ for org in ORG_IDS:
                         pause = min(30, 3 * (attempt + 1))
                         print(f"360Giving HTTP {exc.code} for {org}/{direction}; retrying after {pause}s")
                         time.sleep(pause)
-                if not isinstance(payload, dict) or not isinstance(payload.get("results"), list):
-                    raise ValueError("360Giving returned an unexpected schema")
-                total = payload.get("count")
-                if total is not None and (type(total) is not int or total < 0):
-                    raise ValueError("360Giving returned an invalid total count")
-                if reported_total is None:
-                    reported_total = total
-                elif total != reported_total:
-                    raise ValueError("360Giving total count changed during pagination")
-                if not payload["results"] and (payload.get("next") or (page == 0 and reported_total)):
-                    raise ValueError("360Giving returned an empty page despite reporting available awards")
-                if payload.get("next") and len(payload["results"]) != PER_PAGE:
-                    raise ValueError("360Giving returned a truncated non-final API page")
+                reported_total = validate_page(payload, page, reported_total, PER_PAGE)
                 for row in payload["results"]:
                     if not isinstance(row, dict) or not isinstance(row.get("data"), dict):
                         skipped_invalid += 1
