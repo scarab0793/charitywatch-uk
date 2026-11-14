@@ -115,16 +115,9 @@
           "amount": 289800,
           "source_url": "https://www.cancerresearchuk.org/about-us/our-organisation/annual-report-and-accounts",
           "source_label": "Cancer Research UK Annual Report and Accounts 2025/26 landing page, CEO and staff salaries disclosure"
-        },
-        {
-          "period_end": "2025-03-31",
-          "amount": 288200,
-          "source_url": "https://downloads.ctfassets.net/u7vsjnoopqo5/5mIQtPIZ43jHIbMTdSfRYe/7323416c3007ecece1139df49cfc13de/Cancer_Research_UK_annual_report_and_accounts_2024-25.pdf",
-          "source_label": "Cancer Research UK Annual Report and Accounts 2024/25, note 9 key management personnel, total remuneration column",
-          "page": 87
         }
       ],
-      "caution": "The website calls the £289,800 for 2025/26 total remuneration. The 2024/25 accounts distinguish total remuneration (£288,200) from employer pension contributions and other benefits; do not compare these figures to total employer cost or salary figures at other charities."
+      "caution": "The charity explicitly describes this as total remuneration for 1 April 2025 to 31 March 2026. It is not directly comparable with salary-only disclosures from other charities. Previous-period values require separate verification."
     }
   }
 }
