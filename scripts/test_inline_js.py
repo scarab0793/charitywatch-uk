@@ -9,11 +9,11 @@ import sys
 from pathlib import Path
 
 html = Path("index.html").read_text(encoding="utf-8")
-scripts = re.findall(r"<script\\b([^>]*)>(.*?)</script\\s*>", html, flags=re.I | re.S)
+scripts = re.findall(r"<script\b([^>]*)>(.*?)</script\s*>", html, flags=re.I | re.S)
 inline = [
     body for attrs, body in scripts
-    if not re.search(r"\\bsrc\\s*=", attrs, flags=re.I)
-    and not re.search(r"\\btype\\s*=\\s*['\"](?:application/json|application/ld\\+json)['\"]", attrs, flags=re.I)
+    if not re.search(r"\bsrc\s*=", attrs, flags=re.I)
+    and not re.search(r"\btype\s*=\s*['\"](?:application/json|application/ld\+json)['\"]", attrs, flags=re.I)
 ]
 if not inline:
     print("FAIL: no inline script blocks found", file=sys.stderr)
