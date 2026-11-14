@@ -38,6 +38,21 @@ with tempfile.TemporaryDirectory() as tmp:
     manifest["organisations"][key]["skipped_duplicates"]=1
     path.write_text(json.dumps(manifest),encoding="utf-8")
     assert not validate(folder), "Manifest accounting for excluded rows rejected"
+    # Skipping duplicate/invalid source rows must remain partial even when
+    # the number cached equals the published API count.
+    snapshot["reported_count"]=1
+    manifest["organisations"][key]["reported_count"]=1
+    path.write_text(json.dumps(manifest),encoding="utf-8")
+    source.write_text(json.dumps(snapshot),encoding="utf-8")
+    assert not validate(folder), "Exclusions must permit a partial snapshot even at the reported cap"
+    snapshot["partial"]=False
+    source.write_text(json.dumps(snapshot),encoding="utf-8")
+    assert any("incomplete-data flag" in message for message in validate(folder))
+    snapshot["partial"]=True
+    snapshot["reported_count"]=10
+    manifest["organisations"][key]["reported_count"]=10
+    path.write_text(json.dumps(manifest),encoding="utf-8")
+    source.write_text(json.dumps(snapshot),encoding="utf-8")
     snapshot["results"].append({"grant_id":"test","data":{"id":"test"}})
     snapshot["records_cached"]=2
     manifest["organisations"][key]["records_cached"]=2
