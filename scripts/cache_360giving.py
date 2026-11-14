@@ -7,12 +7,41 @@ This is a capped discovery sample, not a comprehensive list or proof of payments
 """
 import datetime
 import json
+import re
 import time
 import urllib.error
 import urllib.request
 from pathlib import Path
 
-ORG_IDS = ["GB-CHC-802052", "GB-CHC-202918", "GB-CHC-288701"]
+# Three independently sourced showcase profiles are always included. Add a
+# small, deterministic selection of the largest reported institutional grant
+# makers; this is a sample, not a complete register of 360Giving publishers.
+CORE_ORG_IDS = ["GB-CHC-802052", "GB-CHC-202918", "GB-CHC-288701"]
+MAX_ORGS = 12
+
+
+def select_organisations(source=Path("data/grant-makers-ew.json")):
+    selected = list(CORE_ORG_IDS)
+    try:
+        source_data = json.loads(source.read_text(encoding="utf-8"))
+        rows = source_data.get("records", [])
+        # Do not assume the file is already sorted by grant amount.
+        rows = sorted(rows, key=lambda row: row.get("grants_to_institutions") or 0, reverse=True)
+        for row in rows:
+            number = str(row.get("number") or "")
+            if not re.fullmatch(r"[0-9]{4,9}", number):
+                continue
+            org = "GB-CHC-" + number
+            if org not in selected:
+                selected.append(org)
+            if len(selected) >= MAX_ORGS:
+                break
+    except (OSError, ValueError, TypeError, AttributeError) as exc:
+        print("Unable to select additional organisations; keeping core set:", exc)
+    return selected
+
+
+ORG_IDS = select_organisations()
 DIRECTIONS = ("made", "received")
 PER_PAGE = 20
 MAX_PAGES = 2
@@ -20,7 +49,10 @@ OUT = Path("data/360giving")
 OUT.mkdir(parents=True, exist_ok=True)
 summary = {"updated_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
            "source": "360Giving official API; published awards, not confirmed payments",
-           "max_records_per_org_direction": PER_PAGE * MAX_PAGES, "organisations": {}}
+           "max_records_per_org_direction": PER_PAGE * MAX_PAGES,
+           "selected_organisations": ORG_IDS,
+           "selection": "Three core profiles plus the largest reported CCEW institutional grant makers; sampled, not comprehensive",
+           "organisations": {}}
 for org in ORG_IDS:
     for direction in DIRECTIONS:
         all_rows = []
