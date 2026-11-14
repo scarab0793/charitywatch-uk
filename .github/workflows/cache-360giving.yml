@@ -53,7 +53,11 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             mkdir -p data/360giving
-            cp -a /tmp/charitywatch-grants/. data/360giving/
+            # Mirror the validated snapshot exactly, including deletions of
+            # outdated pages. Plain cp -a would retain obsolete JSON pages.
+            rsync -a --delete /tmp/charitywatch-grants/ data/360giving/
+            # Validate again after reset/mirror, immediately before commit.
+            python scripts/verify_360giving_cache.py
             git add -A data/360giving
             if git diff --cached --quiet; then
               echo "360Giving snapshots are already up to date."
