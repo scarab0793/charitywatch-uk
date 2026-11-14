@@ -98,8 +98,24 @@ for org in ORG_IDS:
             "api_url": f"https://api.threesixtygiving.org/api/v1/org/{org}/grants_{direction}/?limit=20&offset=0",
             "results": all_rows,
         }
+        # Keep the entrypoint small and store each award page separately.
+        # The metadata file is published last, after all referenced pages exist.
+        page_names = []
+        for start in range(0, len(all_rows), PER_PAGE):
+            filename = f"{org}-{direction}-p{start // PER_PAGE + 1}.json"
+            page = {"results": all_rows[start:start + PER_PAGE]}
+            (OUT / filename).write_text(
+                json.dumps(page, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+            page_names.append(filename)
+        data.pop("results")
+        data["pages"] = page_names
+        data["page_size"] = PER_PAGE
         path = OUT / f"{org}-{direction}.json"
         path.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+        # Remove pages from older, longer versions of this same snapshot.
+        for old_page in OUT.glob(f"{org}-{direction}-p*.json"):
+            if old_page.name not in page_names:
+                old_page.unlink()
         summary["organisations"][f"{org}:{direction}"] = {
             "records_cached": len(all_rows), "reported_count": reported_total,
             "skipped_invalid": skipped_invalid, "skipped_duplicates": skipped_duplicates,
