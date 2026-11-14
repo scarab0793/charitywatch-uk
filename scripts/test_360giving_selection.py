@@ -44,4 +44,12 @@ with tempfile.TemporaryDirectory() as folder:
     assert len(set(result_a)) == len(result_a)
     assert select_organisations(path, 12, manifest_path, retry_index=0) == result_a
     assert select_organisations(path, 3, manifest_path, retry_index=0) == list(CORE_ORG_IDS)
+    # A previously unavailable source survives a refresh where not selected.
+    manifest_path.write_text(json.dumps({
+        "unavailable_organisations": ["GB-CHC-100023", "GB-CHC-100024"],
+        "organisations": {"GB-CHC-802052:made": {"updated": True}}
+    }), encoding="utf-8")
+    retained = select_organisations(path, 12, manifest_path, retry_index=0)
+    assert retained == result_a, "Unavailable source rotation history was lost"
+
 print("PASS: bounded, deterministic, deduplicated 360Giving cache selection with safe source fallback")
