@@ -8,7 +8,7 @@ const source = fs.readFileSync('assets/grant-links.js', 'utf8');
 const elements = new Map();
 const node = id => {
   if (!elements.has(id)) elements.set(id, {
-    innerHTML: '', textContent: '', hidden: false,
+    innerHTML: '', textContent: '', value: '', disabled: false, hidden: false,
     listeners: {},
     addEventListener(event, callback) { this.listeners[event] = callback; },
     insertAdjacentHTML(_position, html) { this.innerHTML += html; },
@@ -43,7 +43,7 @@ function answer(direction,title){
       reported_count:1,
       records_cached:1,
       partial:false,
-      results:[{data:{title, currency:'GBP', amountAwarded:100}}],
+      results:[{grant_id:'test-grant-'+direction, data:{title, currency:'GBP', amountAwarded:100}}],
     }),
   });
 }
@@ -100,7 +100,7 @@ deferred.get('made')({
   }),
 });
 await flush();
-assert.match(node('grantAwardStatus').innerHTML,/no current local award snapshot/);
+assert.match(node('grantAwardStatus').innerHTML,/validated local award snapshot is unavailable or incomplete/i);
 assert.doesNotMatch(node('grantAwardRows').innerHTML,/MISMATCHED GRANT/);
 console.log('PASS: stale responses, genuine zero awards, partial snapshots and mismatched charity identity');
 
