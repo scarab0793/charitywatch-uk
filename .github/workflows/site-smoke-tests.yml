@@ -17,6 +17,9 @@ on:
       - 'assets/**'
       - 'scripts/smoke_test.mjs'
       - 'scripts/verify_published_data.py'
+      - 'scripts/check_ccew_archives.py'
+      - 'scripts/test_ccew_archives.py'
+      - 'tests/browser-smoke.html'
       - 'data/verified-ceo-pay.json'
   workflow_dispatch:
 permissions:
@@ -37,7 +40,7 @@ jobs:
       - name: Verified CEO disclosure source checks
         run: python3 scripts/validate_ceo_pay.py
       - name: Validate all published official datasets
-        run: python3 scripts/verify_published_data.py scripts/check_ccew_archives.py scripts/test_ccew_archives.py
+        run: python3 scripts/verify_published_data.py
       - name: Test CCEW ZIP validation with synthetic source files
         run: python3 scripts/test_ccew_archives.py
       - name: Check import and validation Python syntax
