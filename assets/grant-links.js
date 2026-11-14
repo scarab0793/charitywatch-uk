@@ -36,13 +36,14 @@ const cwGrantCard=(row,direction,apiPageUrl='')=>{
  const awarded=currency==='GBP'?cwGrantMoney(amount):Number.isFinite(amount)?cwGrantEscape(amount.toLocaleString('en-GB'))+' '+cwGrantEscape(currency||'currency unspecified'):'Not reported';
  const disbursed=g.amountDisbursed;
  const paid=Number.isFinite(disbursed)?'<p class="small muted">Amount disbursed, where separately reported: '+(currency==='GBP'?cwGrantMoney(disbursed):cwGrantEscape(disbursed.toLocaleString('en-GB'))+' '+cwGrantEscape(currency))+'</p>':'';
- const providedSource=g.dataSource||row?.data_source?.url||row?.additional_data?.data_source?.url||row?.additional_data?.data_source?.source_url;
+ const rawSource=g.dataSource||row?.data_source||row?.additional_data?.data_source;
+ const providedSource=typeof rawSource==='string'?rawSource:(rawSource?.url||rawSource?.source_url||rawSource?.download_url);
  const source=cwGrantSourceLink(providedSource);
  const additional=cwGrantSourceLink(g.url);
  const apiSource=cwGrantSourceLink(apiPageUrl);
  const identifier=cwGrantEscape(g.id||row.grant_id||'Not provided');
  const title=cwGrantEscape(g.title||'Grant award');
- return '<article class="grant-award"><div class="grant-connection"><div><span class="small muted">Funder</span><b>'+cwGrantOrganisationLabel(funder)+'</b></div><span class="grant-arrow" aria-hidden="true">→</span><div><span class="small muted">Recipient</span><b>'+cwGrantOrganisationLabel(recipient)+'</b></div></div><div class="stat">'+awarded+'</div><p class="small muted">Amount awarded · '+cwGrantEscape(g.awardDate||'Award date not published')+'</p>'+paid+'<p><strong>'+title+'</strong></p>'+(g.description?'<p class="small">'+cwGrantEscape(g.description).slice(0,450)+'</p>':'')+'<p class="small muted">Grant identifier: '+identifier+'</p><p class="small muted">'+(source?'Publisher-provided data: '+source:'Original publisher URL not provided in this record')+(additional?' · Grant details: '+additional:'')+(apiSource?' · 360Giving API record page: '+apiSource:'')+'</p></article>';
+ return '<article class="grant-award"><div class="grant-connection"><div><span class="small muted">Funder</span><b>'+cwGrantOrganisationLabel(funder)+'</b></div><span class="grant-arrow" aria-hidden="true">→</span><div><span class="small muted">Recipient</span><b>'+cwGrantOrganisationLabel(recipient)+'</b></div></div><div class="stat">'+awarded+'</div><p class="small muted">Amount awarded · '+cwGrantEscape(g.awardDate||'Award date not published')+'</p>'+paid+'<p><strong>'+title+'</strong></p>'+(g.description?'<p class="small">'+cwGrantEscape(g.description).slice(0,450)+'</p>':'')+'<p class="small muted">Grant identifier: '+identifier+'</p><p class="small muted">'+(source?'Publisher-provided data: '+source:'Original publisher URL not provided in this record')+(additional?' · Grant details: '+additional:'')+(apiSource?' · 360Giving API results page: '+apiSource:'')+'</p></article>';
 };
 const cwGrantAccounting=partB=>{
  const amount=partB?.expenditure_grants_institution;
