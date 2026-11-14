@@ -54,8 +54,14 @@ for org in ORG_IDS:
                 if not isinstance(payload, dict) or not isinstance(payload.get("results"), list):
                     raise ValueError("360Giving returned an unexpected schema")
                 total = payload.get("count")
-                if type(total) is int and total >= 0:
+                if total is not None and (type(total) is not int or total < 0):
+                    raise ValueError("360Giving returned an invalid total count")
+                if reported_total is None:
                     reported_total = total
+                elif total != reported_total:
+                    raise ValueError("360Giving total count changed during pagination")
+                if page > 0 and not payload["results"] and payload.get("next"):
+                    raise ValueError("360Giving returned an empty intermediate award page")
                 for row in payload["results"]:
                     if not isinstance(row, dict) or not isinstance(row.get("data"), dict):
                         skipped_invalid += 1
