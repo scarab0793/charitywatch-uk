@@ -56,11 +56,11 @@ def validate(root):
             errors.append(key + ": snapshot record count mismatch or over limit")
         if detail.get("records_cached") != n or detail.get("reported_count") != reported:
             errors.append(key + ": manifest snapshot counts disagree")
-        if reported is not None and (not isinstance(reported, int) or reported < n):
+        if reported is not None and (not isinstance(reported, int) or isinstance(reported, bool) or not isinstance(n, int) or reported < n):
             errors.append(key + ": reported total below stored records")
         if not isinstance(rows, list) or any(not isinstance(row, dict) or not isinstance(row.get("data"), dict) for row in rows):
             errors.append(key + ": malformed award rows")
-        if snap.get("partial") != (reported is None or n < reported):
+        if isinstance(n, int) and isinstance(reported, (int, type(None))) and snap.get("partial") != (reported is None or n < reported):
             errors.append(key + ": incomplete-data flag is inaccurate")
         try:
             datetime.datetime.fromisoformat(snap["retrieved_utc"])
