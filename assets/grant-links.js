@@ -109,11 +109,13 @@ const cwGrantBinder=(region,number)=>{
     if(!Number.isInteger(payload.page_size)||payload.page_size<1||payload.page_size>100||
        payload.pages.some((name,i)=>name!==expectedPrefix+(i+1)+'.json')||
        payload.pages.length>100)throw Error('Invalid published page references');
-    const pageResults=await Promise.all(payload.pages.map(async name=>{
+    if(payload.pages.length>Math.ceil(100/payload.page_size))throw Error('Too many published award pages');
+    const pageResults=await Promise.all(payload.pages.map(async (name,index)=>{
      const pageResponse=await fetch('data/360giving/'+name,{cache:'no-store'});
      if(!pageResponse.ok)throw Error('Award page unavailable');
      const page=await pageResponse.json();
-     if(!Array.isArray(page.results)||page.results.length<1||page.results.length>payload.page_size)throw Error('Invalid award page');
+     if(!Array.isArray(page.results)||page.results.length<1||page.results.length>payload.page_size||
+        (index<payload.pages.length-1&&page.results.length!==payload.page_size))throw Error('Invalid award page');
      return page.results;
     }));
     if(currentRequest!==requestVersion)return;
