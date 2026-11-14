@@ -19,7 +19,7 @@ const cwGrantOrganisation=(value,unnamed)=>{
  const first=Array.isArray(value)?value[0]:null;
  const name=typeof first?.name==='string'&&first.name.trim()?first.name:unnamed;
  const id=typeof first?.id==='string'?first.id:'';
- const matched=/^GB-CHC-(\\d{4,9})$/.exec(id);
+ const matched=/^GB-CHC-(\d{4,9})$/.exec(id);
  return {name,id,registered:matched?.[1]||null};
 };
 const cwGrantOrganisationLabel=org=>{
