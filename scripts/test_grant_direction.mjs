@@ -38,8 +38,11 @@ function answer(direction,title){
     ok:true,
     json:async()=>({
       direction,
+      organisation_id:'GB-CHC-802052',
       retrieved_utc:'2026-11-14T00:00:00+00:00',
       reported_count:1,
+      records_cached:1,
+      partial:false,
       results:[{data:{title, currency:'GBP', amountAwarded:100}}],
     }),
   });
