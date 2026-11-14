@@ -131,6 +131,10 @@ jobs:
           assert m['word_shards']
           print('Word index records:',m['word_index_records'])
           PY
+      - name: Validate final published data consistency
+        run: |
+          python scripts/verify_salary_shards.py
+          python scripts/verify_published_data.py
       - name: Commit verified directory
         run: |
           git config user.name "github-actions[bot]"
