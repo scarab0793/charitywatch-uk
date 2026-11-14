@@ -42,7 +42,11 @@ def read_groups(folder, prefixes, kind):
                 raise ValueError(f"{kind}: {number} stored in {prefix}, expected {match}")
             if number in seen:
                 raise ValueError(f"{kind}: duplicate registration {number}")
-            # Compare complete published profiles, not only displayed names.\n            # The importer must write identical financial/Part B details into\n            # both the name and registration-number lookup shards.\n            canonical = json.dumps(row, ensure_ascii=False, sort_keys=True, separators=(\",\", \":\"))\n            seen[number] = hashlib.sha256(canonical.encode(\"utf-8\")).hexdigest()
+            # Compare complete published profiles, not only displayed names.
+            # The importer must write identical financial/Part B details into
+            # both the name and registration-number lookup shards.
+            canonical = json.dumps(row, ensure_ascii=False, sort_keys=True, separators=(\",\", \":\"))
+            seen[number] = hashlib.sha256(canonical.encode(\"utf-8\")).hexdigest()
     return seen
 
 
