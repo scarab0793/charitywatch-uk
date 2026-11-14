@@ -145,3 +145,12 @@ jobs:
             git pull --rebase origin main
             git push origin HEAD:main
           fi
+      - name: Upload import failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: charitywatch-import-debug
+          path: |
+            data/manifest-ew.json
+            data/grant-makers-meta-ew.json
+          if-no-files-found: ignore
