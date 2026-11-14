@@ -2,6 +2,16 @@ name: Cache 360Giving published grant awards
 on:
   schedule:
     - cron: '22 5 * * 2'
+  # Rebuild the public cache when the collector or its selection rules change.
+  # Changes made by the workflow to data/360giving do not retrigger it.
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/cache_360giving.py'
+      - 'scripts/select_360giving_orgs.py'
+      - 'scripts/validate_360giving_api_page.py'
+      - 'scripts/validate_360giving_sample.py'
+      - '.github/workflows/cache-360giving.yml'
   workflow_dispatch:
 permissions:
   contents: write
