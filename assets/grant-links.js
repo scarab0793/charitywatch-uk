@@ -15,19 +15,32 @@ const cwGrantSourceLink=url=>{
   return '<a href="'+cwGrantEscape(u.href)+'" target="_blank" rel="noopener noreferrer">Publisher data</a>';
  }catch(_){return '';}
 };
+const cwGrantOrganisation=(value,unnamed)=>{
+ const first=Array.isArray(value)?value[0]:null;
+ const name=typeof first?.name==='string'&&first.name.trim()?first.name:unnamed;
+ const id=typeof first?.id==='string'?first.id:'';
+ const matched=/^GB-CHC-(\\d{4,9})$/.exec(id);
+ return {name,id,registered:matched?.[1]||null};
+};
+const cwGrantOrganisationLabel=org=>{
+ const name=cwGrantEscape(org.name);
+ return org.registered?'<a href="#charity/ew/'+org.registered+'">'+name+'</a>':name;
+};
 const cwGrantCard=(row,direction)=>{
  const g=row?.data;
  if(!g||typeof g!=='object')return '';
- const who=direction==='made'?g.recipientOrganization?.[0]:g.fundingOrganization?.[0];
- const orgName=who?.name||(direction==='made'?'Recipient organisation not stated':'Funding organisation not stated');
- const award=g.amountAwarded;
- const orgId=who?.id||'';
- const registered=/^GB-CHC-(\d{4,9})$/.exec(orgId);
- const name=cwGrantEscape(orgName);
- const heading=registered?'<a href="#charity/ew/'+registered[1]+'">'+name+'</a>':name;
- const amount=g.currency==='GBP'?cwGrantMoney(award):Number.isFinite(award)?cwGrantEscape(award)+' '+cwGrantEscape(g.currency||'currency unspecified'):'Not reported';
+ const funder=cwGrantOrganisation(g.fundingOrganization,'Funding organisation not stated');
+ const recipient=cwGrantOrganisation(g.recipientOrganization,g.recipientIndividual?'Individual recipient (not named)':'Recipient organisation not stated');
+ const amount=g.amountAwarded;
+ const currency=typeof g.currency==='string'?g.currency:'';
+ const awarded=currency==='GBP'?cwGrantMoney(amount):Number.isFinite(amount)?cwGrantEscape(amount.toLocaleString('en-GB'))+' '+cwGrantEscape(currency||'currency unspecified'):'Not reported';
+ const disbursed=g.amountDisbursed;
+ const paid=Number.isFinite(disbursed)?'<p class="small muted">Amount disbursed, where separately reported: '+(currency==='GBP'?cwGrantMoney(disbursed):cwGrantEscape(disbursed.toLocaleString('en-GB'))+' '+cwGrantEscape(currency))+'</p>':'';
  const source=cwGrantSourceLink(g.dataSource);
- return '<article class="grant-award"><b>'+heading+'</b><strong>'+amount+'</strong><p class="small muted">Awarded '+cwGrantEscape(g.awardDate||'date not published')+' · '+cwGrantEscape(g.title||'Grant')+'</p>'+(g.description?'<p class="small">'+cwGrantEscape(g.description).slice(0,450)+'</p>':'')+'<p class="small muted">Grant ID: '+cwGrantEscape(g.id||row.grant_id||'Not provided')+(source?' · '+source:'')+'</p></article>';
+ const additional=cwGrantSourceLink(g.url);
+ const identifier=cwGrantEscape(g.id||row.grant_id||'Not provided');
+ const title=cwGrantEscape(g.title||'Grant award');
+ return '<article class="grant-award"><div class="grant-connection"><div><span class="small muted">Funder</span><b>'+cwGrantOrganisationLabel(funder)+'</b></div><span class="grant-arrow" aria-hidden="true">→</span><div><span class="small muted">Recipient</span><b>'+cwGrantOrganisationLabel(recipient)+'</b></div></div><div class="stat">'+awarded+'</div><p class="small muted">Amount awarded · '+cwGrantEscape(g.awardDate||'Award date not published')+'</p>'+paid+'<p><strong>'+title+'</strong></p>'+(g.description?'<p class="small">'+cwGrantEscape(g.description).slice(0,450)+'</p>':'')+'<p class="small muted">Grant identifier: '+identifier+'</p><p class="small muted">'+(source?'Data publisher: '+source:'Data publisher URL not provided')+(additional?' · Grant details: '+additional:'')+'</p></article>';
 };
 const cwGrantAccounting=partB=>{
  const amount=partB?.expenditure_grants_institution;
