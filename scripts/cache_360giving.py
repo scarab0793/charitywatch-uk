@@ -13,6 +13,7 @@ import urllib.request
 from pathlib import Path
 from select_360giving_orgs import select_organisations
 from validate_360giving_api_page import validate_page
+from validate_360giving_sample import validate_sample
 
 ORG_IDS = select_organisations()
 DIRECTIONS = ("made", "received")
@@ -77,6 +78,13 @@ for org in ORG_IDS:
             except (urllib.error.URLError, ValueError, TimeoutError) as exc:
                 error = type(exc).__name__ + ": " + str(exc)[:150]
                 break
+        # A provider may return entirely unusable records despite reporting
+        # awards. Keep the last valid cache instead of publishing an empty one.
+        if error is None:
+            try:
+                validate_sample(all_rows, reported_total, skipped_invalid, skipped_duplicates)
+            except ValueError as exc:
+                error = str(exc)
         # Do not overwrite a previously valid published snapshot with a failed request.
         if error:
             print(f"Could not update {org}/{direction}: {error}")
