@@ -122,9 +122,12 @@ const cwGrantBinder=(region,number)=>{
     payload.results=pageResults.flat();
    }
    if(!Array.isArray(payload.results))throw Error('Unexpected snapshot format');
-   if(!Number.isInteger(payload.records_cached)||payload.records_cached!==payload.results.length)throw Error('Snapshot record count mismatch');
-   if(payload.reported_count!==null&&(!Number.isInteger(payload.reported_count)||payload.reported_count<payload.results.length))throw Error('Invalid reported award count');
-   const excluded=(Number.isInteger(payload.skipped_invalid)&&payload.skipped_invalid>0)||(Number.isInteger(payload.skipped_duplicates)&&payload.skipped_duplicates>0);
+   if(!Number.isSafeInteger(payload.records_cached)||payload.records_cached<0||payload.records_cached!==payload.results.length)throw Error('Snapshot record count mismatch');
+   if(payload.reported_count!==null&&(!Number.isSafeInteger(payload.reported_count)||payload.reported_count<0||payload.reported_count<payload.results.length))throw Error('Invalid reported award count');
+   if(![payload.skipped_invalid??0,payload.skipped_duplicates??0].every(value=>Number.isSafeInteger(value)&&value>=0))throw Error('Invalid excluded-row counts');
+   const ids=payload.results.map(row=>row?.grant_id);
+   if(ids.some(id=>typeof id!=='string'||!id.trim())||new Set(ids).size!==ids.length||payload.results.some(row=>!row||typeof row.data!=='object'||row.data===null||Array.isArray(row.data)))throw Error('Invalid or duplicate award records');
+   const excluded=(payload.skipped_invalid??0)>0||(payload.skipped_duplicates??0)>0;
    if(typeof payload.partial!=='boolean'||payload.partial!==(payload.reported_count===null||payload.results.length<payload.reported_count||excluded))throw Error('Invalid partial snapshot status');
    cached=payload.results;reportedTotal=payload.reported_count;partialSnapshot=payload.partial;
    filter.disabled=false;
@@ -141,7 +144,7 @@ const cwGrantBinder=(region,number)=>{
   }catch(_){
    if(currentRequest!==requestVersion)return;
    summary.textContent='No locally cached records';
-   status.innerHTML='This charity has no current local award snapshot. <a href="'+cwGrantEscape(apiUrl)+'" target="_blank" rel="noopener noreferrer">Open 360Giving official API</a> for the original records (the API may not be viewable inside some browsers).';
+   status.innerHTML='A validated local award snapshot is unavailable or incomplete. No unverified award records have been displayed. <a href="'+cwGrantEscape(apiUrl)+'" target="_blank" rel="noopener noreferrer">Check the 360Giving API directly</a> for the original source records.';
   }
  };
  filter.addEventListener('input',()=>{
