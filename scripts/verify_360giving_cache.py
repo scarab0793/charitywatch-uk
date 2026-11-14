@@ -49,7 +49,37 @@ def validate(root):
         except (OSError, ValueError) as exc:
             errors.append(key + ": missing/invalid successful snapshot: " + str(exc))
             continue
-        rows = snap.get("results")
+        # The current format stores a manifest and bounded same-directory pages.
+        # Older one-file snapshots remain readable during migration.
+        pages = snap.get("pages")
+        if pages is not None:
+            if (not isinstance(pages, list) or
+                    any(not isinstance(p, str) or not re.fullmatch(
+                        re.escape(org + "-" + direction) + r"-p[1-9][0-9]*[.]json", p)
+                        for p in pages) or
+                    pages != [f"{org}-{direction}-p{i}.json" for i in range(1, len(pages) + 1)]):
+                errors.append(key + ": invalid snapshot page references")
+                continue
+            size = snap.get("page_size")
+            if type(size) is not int or size < 1 or size > 100:
+                errors.append(key + ": invalid page size")
+                continue
+            rows = []
+            for page_name in pages:
+                try:
+                    chunk = json.loads((root / page_name).read_text(encoding="utf-8"))
+                except (OSError, ValueError) as exc:
+                    errors.append(key + ": missing/invalid page: " + str(exc))
+                    continue
+                part = chunk.get("results") if isinstance(chunk, dict) else None
+                if not isinstance(part, list) or not 1 <= len(part) <= size:
+                    errors.append(key + ": malformed page contents")
+                    continue
+                rows.extend(part)
+            if len(pages) != (len(rows) + size - 1) // size:
+                errors.append(key + ": snapshot page count mismatch")
+        else:
+            rows = snap.get("results")
         n = snap.get("records_cached")
         reported = snap.get("reported_count")
         if snap.get("organisation_id") != org or snap.get("direction") != direction:
