@@ -56,4 +56,22 @@ target.write_text(json.dumps({
     "record_count": len(records),
     "records": records
 }, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+metadata = {
+    "source": "CCEW annual return Part B",
+    "field": "expenditure_grants_institution",
+    "record_count": len(records),
+    "total_reported_across_distinct_periods": sum(r["grants_to_institutions"] for r in records),
+    "most_recent_period_end": max(r["period_end"] for r in records),
+    "earliest_period_end": min(r["period_end"] for r in records),
+    "year_end_counts": {},
+    "updated_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+    "caution": "Do not treat the combined total as a single-year statistic. Dates differ and grants may flow between charities; recipients are not listed."
+}
+for item in records:
+    year = item["period_end"][:4]
+    metadata["year_end_counts"][year] = metadata["year_end_counts"].get(year, 0) + 1
+(root / "grant-makers-meta-ew.json").write_text(
+    json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
 print("Published", len(records), "charities reporting positive institutional grants")
+print("Reporting period end years:", sorted(metadata["year_end_counts"].items()))
+
