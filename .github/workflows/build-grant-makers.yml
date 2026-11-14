@@ -1,0 +1,29 @@
+name: Publish verified institutional grant totals
+on:
+  push:
+    paths:
+      - '.github/workflows/build-grant-makers.yml'
+      - 'scripts/build_grant_makers.py'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  grant-makers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Produce grant-maker totals from verified Part B statements
+        run: python scripts/build_grant_makers.py
+      - name: Commit validated summary
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/grant-makers-ew.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Publish sourced grant-making totals"
+            git push
+          fi
