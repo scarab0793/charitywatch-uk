@@ -47,7 +47,7 @@ const cwComparisonChart=(records,metric)=>{
   const years=new Map();
   for(const p of periods){
    const end=String(p.year||'').slice(0,10),y=end.slice(0,4),value=p[chosen];
-   if(!/^\\d{4}$/.test(y)||!Number.isFinite(value)||value<0)continue;
+   if(!/^\d{4}$/.test(y)||!Number.isFinite(value)||value<0)continue;
    const prior=years.get(y);
    if(!prior||end>prior.date)years.set(y,{date:end,value});
   }
