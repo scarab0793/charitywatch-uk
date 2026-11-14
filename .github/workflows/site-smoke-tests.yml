@@ -5,6 +5,7 @@ on:
       - 'index.html'
       - 'assets/**'
       - 'scripts/smoke_test.mjs'
+      - 'scripts/test_grant_direction.mjs'
       - 'scripts/verify_published_data.py'
       - 'scripts/verify_search_indexes.py'
       - 'scripts/test_search_indexes.py'
@@ -31,6 +32,7 @@ on:
       - 'index.html'
       - 'assets/**'
       - 'scripts/smoke_test.mjs'
+      - 'scripts/test_grant_direction.mjs'
       - 'scripts/verify_published_data.py'
       - 'scripts/verify_search_indexes.py'
       - 'scripts/test_search_indexes.py'
@@ -68,6 +70,8 @@ jobs:
           node-version: '22'
       - name: Website and chart data integrity tests
         run: node scripts/smoke_test.mjs
+      - name: Regression test fast grant direction changes
+        run: node scripts/test_grant_direction.mjs
       - name: Salary shard consistency
         run: python3 scripts/verify_salary_shards.py
       - name: Verified CEO disclosure source checks
