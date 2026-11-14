@@ -53,7 +53,7 @@ const cwGrantAccounting=partB=>{
 };
 const cwGrantControls=(region,number,partB)=>{
  if(region!=='ew'||!/^\d{4,9}$/.test(String(number)))return '';
- return '<section class="grant-details" id="grant-awards"><h3>Published grant awards and recipients</h3><p class="small muted">Source: 360Giving open data, published by grantmakers. <strong>Amount awarded is not necessarily money paid.</strong> This dataset is separate from Charity Commission Part B expenditure and may cover different years. Coverage is incomplete. The cached public award sample is loaded only when you click; it may not include every award.</p>'+cwGrantAccounting(partB)+'<div class="comparison-actions"><button type="button" id="grantMade" data-grant-direction="made">Grants awarded by this charity</button><button type="button" id="grantReceived" data-grant-direction="received">Grants awarded to this charity</button></div><p id="grantAwardStatus" class="small muted" aria-live="polite">Choose a direction to look for published awards.</p><div id="grantAwardRows" class="grant-awards"></div><button type="button" id="grantAwardsMore" hidden>Load 20 more awards</button><p class="small muted">If the API cannot be accessed from this browser, use the direct 360Giving links shown in the error message. The platform does not claim complete tracing of payments.</p></section>';
+ return '<section class="grant-details" id="grant-awards"><h3>Published grant awards and recipients</h3><p class="small muted">Source: 360Giving open data, published by grantmakers. <strong>Amount awarded is not necessarily money paid.</strong> This dataset is separate from Charity Commission Part B expenditure and may cover different years. Coverage is incomplete. The cached public award sample is loaded only when you click; it may not include every award.</p>'+cwGrantAccounting(partB)+'<div class="comparison-actions"><button type="button" id="grantMade" data-grant-direction="made">Grants awarded by this charity</button><button type="button" id="grantReceived" data-grant-direction="received">Grants awarded to this charity</button></div><p id="grantAwardStatus" class="small muted" aria-live="polite">Choose a direction to look for published awards.</p><div class="search" style="margin:12px 0"><input id="grantAwardFilter" type="search" placeholder="Filter loaded awards by funder, recipient, project or grant ID" aria-label="Filter locally cached grant awards" disabled></div><div id="grantAwardRows" class="grant-awards"></div><button type="button" id="grantAwardsMore" hidden>Load 20 more awards</button><p class="small muted">If the API cannot be accessed from this browser, use the direct 360Giving links shown in the error message. The platform does not claim complete tracing of payments.</p></section>';
 };
 const cwGrantBinder=(region,number)=>{
  const box=document.getElementById('grant-awards');
@@ -64,17 +64,34 @@ const cwGrantBinder=(region,number)=>{
  const more=document.getElementById('grantAwardsMore');
  const summary=document.getElementById('grantAwardSummary');
  const note=document.getElementById('grantAwardComparisonNote');
+ const filter=document.getElementById('grantAwardFilter');
+ const matchingAwards=()=>{
+  const term=String(filter.value||'').trim().toLocaleLowerCase('en-GB');
+  if(!term)return cached;
+  return cached.filter(row=>{
+   const g=row?.data||{};
+   const organisations=[g.fundingOrganization,g.recipientOrganization]
+    .flatMap(value=>Array.isArray(value)?value:[])
+    .map(org=>[org?.name,org?.id].filter(v=>typeof v==='string').join(' '));
+   return [g.title,g.description,g.id,row?.grant_id,...organisations]
+    .filter(v=>typeof v==='string').some(v=>v.toLocaleLowerCase('en-GB').includes(term));
+  });
+ };
  const renderMore=()=>{
-  const visible=cached.slice(offset,offset+20);
+  const matches=matchingAwards();
+  const visible=matches.slice(offset,offset+20);
   rows.insertAdjacentHTML('beforeend',visible.map(r=>cwGrantCard(r,direction,cwGrantEndpoint(region,number,direction))).join(''));
   offset+=visible.length;
   const total=reportedTotal!==null?reportedTotal.toLocaleString('en-GB')+' published awards':'Published awards';
-  status.textContent=total+' · '+offset.toLocaleString('en-GB')+' of '+cached.length.toLocaleString('en-GB')+' locally cached records displayed. '+(partialSnapshot?'This is a partial snapshot; more awards may exist.':'All records in this published snapshot are displayed.');
-  more.hidden=offset>=cached.length;
+  const filtered=filter.value.trim().length>0;
+  status.textContent=total+' · '+offset.toLocaleString('en-GB')+' of '+matches.length.toLocaleString('en-GB')+(filtered?' matching':'')+' locally cached records displayed (from '+cached.length.toLocaleString('en-GB')+' cached). '+(partialSnapshot?'Only a partial source sample was collected; search results are not exhaustive.':'Search covers all records in the published snapshot.');
+  more.hidden=offset>=matches.length;
+  more.textContent='Show next '+Math.min(20,matches.length-offset)+' matching awards';
  };
  const open=async(nextDirection)=>{
   const currentRequest=++requestVersion;
   direction=nextDirection;offset=0;cached=[];reportedTotal=null;partialSnapshot=true;rows.innerHTML='';
+  filter.value='';filter.disabled=true;
   more.hidden=true;
   status.textContent='Loading published award snapshot…';
   summary.textContent='Loading…';
@@ -91,6 +108,7 @@ const cwGrantBinder=(region,number)=>{
    const excluded=(Number.isInteger(payload.skipped_invalid)&&payload.skipped_invalid>0)||(Number.isInteger(payload.skipped_duplicates)&&payload.skipped_duplicates>0);
    if(typeof payload.partial!=='boolean'||payload.partial!==(payload.reported_count===null||payload.results.length<payload.reported_count||excluded))throw Error('Invalid partial snapshot status');
    cached=payload.results;reportedTotal=payload.reported_count;partialSnapshot=payload.partial;
+   filter.disabled=false;
    summary.textContent=reportedTotal!==null?reportedTotal.toLocaleString('en-GB')+' published '+(direction==='made'?'outgoing':'incoming')+' awards':'Published awards; total unknown';
    const skippedInvalid=Number.isInteger(payload.skipped_invalid)&&payload.skipped_invalid>=0?payload.skipped_invalid:0;
    const skippedDuplicates=Number.isInteger(payload.skipped_duplicates)&&payload.skipped_duplicates>=0?payload.skipped_duplicates:0;
@@ -107,6 +125,10 @@ const cwGrantBinder=(region,number)=>{
    status.innerHTML='This charity has no current local award snapshot. <a href="'+cwGrantEscape(apiUrl)+'" target="_blank" rel="noopener noreferrer">Open 360Giving official API</a> for the original records (the API may not be viewable inside some browsers).';
   }
  };
+ filter.addEventListener('input',()=>{
+  if(!direction||filter.disabled)return;
+  offset=0;rows.innerHTML='';renderMore();
+ });
  for(const button of box.querySelectorAll('[data-grant-direction]')){
   button.addEventListener('click',()=>open(button.dataset.grantDirection));
  }
