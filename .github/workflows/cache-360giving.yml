@@ -20,6 +20,7 @@ jobs:
       - name: Test page layout and cache consistency before collecting
         run: |
           python scripts/test_360giving_collection_config.py
+          python scripts/test_360giving_api_pages.py
           python scripts/test_360giving_pages.py
           python scripts/test_360giving_cache.py
       - name: Retrieve selected organisation grant awards
