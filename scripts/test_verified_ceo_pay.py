@@ -2,6 +2,7 @@
 """Validate evidence references and differing CEO remuneration bases."""
 import datetime
 import json
+import math
 import re
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -23,8 +24,10 @@ for key, charity in records.items():
         datetime.date.fromisoformat(date)
         assert date not in seen, (key, date)
         seen.add(date)
-        assert type(record.get("amount")) in (int, float) and 0 <= record["amount"] < 10_000_000, key
+        assert type(record.get("amount")) in (int, float) and math.isfinite(record["amount"]) and 0 <= record["amount"] < 10_000_000, key
         url = urlsplit(record.get("source_url", ""))
         assert url.scheme == "https" and url.hostname and not url.username and not url.password, key
         assert isinstance(record.get("source_label"), str) and record["source_label"].strip(), key
+        if "page" in record:
+            assert type(record["page"]) is int and record["page"] >= 1, key
 print(f"PASS: {len(records)} sourced CEO remuneration records have explicit pay definitions")
