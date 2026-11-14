@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Cache small, explicitly partial 360Giving award extracts for GitHub Pages.
+"""Cache bounded, explicitly partial 360Giving award extracts for GitHub Pages.
 
 360Giving currently does not send permissive browser CORS headers.
 Use Actions (server-to-server), then publish a same-origin static snapshot.
@@ -16,7 +16,7 @@ from select_360giving_orgs import select_organisations
 ORG_IDS = select_organisations()
 DIRECTIONS = ("made", "received")
 PER_PAGE = 20
-MAX_PAGES = 2
+MAX_PAGES = 5
 OUT = Path("data/360giving")
 OUT.mkdir(parents=True, exist_ok=True)
 summary = {"updated_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
@@ -54,7 +54,7 @@ for org in ORG_IDS:
                 if not isinstance(payload, dict) or not isinstance(payload.get("results"), list):
                     raise ValueError("360Giving returned an unexpected schema")
                 total = payload.get("count")
-                if isinstance(total, int) and total >= 0:
+                if type(total) is int and total >= 0:
                     reported_total = total
                 for row in payload["results"]:
                     if not isinstance(row, dict) or not isinstance(row.get("data"), dict):
@@ -74,7 +74,7 @@ for org in ORG_IDS:
                         "publisher": row.get("publisher"),
                         "data_license": row.get("data_license"),
                     })
-                if not payload.get("next") or not payload["results"]:
+                if not payload.get("next") or not payload["results"] or (reported_total is not None and len(all_rows) >= reported_total):
                     break
                 time.sleep(1.2)
             except (urllib.error.URLError, ValueError, TimeoutError) as exc:
