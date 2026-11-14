@@ -54,14 +54,19 @@ def validate(root):
             errors.append(key + ": snapshot organisation/direction mismatch")
         if not isinstance(rows, list) or type(n) is not int or n < 0 or n != len(rows) or n > limit:
             errors.append(key + ": snapshot record count mismatch or over limit")
-        if detail.get("records_cached") != n or detail.get("reported_count") != reported:
+        if (type(detail.get("records_cached")) is not int or detail.get("records_cached") != n or
+                (reported is not None and type(detail.get("reported_count")) is not int) or
+                detail.get("reported_count") != reported):
             errors.append(key + ": manifest snapshot counts disagree")
         invalid = snap.get("skipped_invalid", 0)
         duplicates = snap.get("skipped_duplicates", 0)
         if any(not isinstance(v, int) or isinstance(v, bool) or v < 0 for v in (invalid, duplicates)):
             errors.append(key + ": invalid skipped-row counts")
             invalid, duplicates = 0, 0
-        if detail.get("skipped_invalid", invalid) != invalid or detail.get("skipped_duplicates", duplicates) != duplicates:
+        if (type(detail.get("skipped_invalid", invalid)) is not int or
+                type(detail.get("skipped_duplicates", duplicates)) is not int or
+                detail.get("skipped_invalid", invalid) != invalid or
+                detail.get("skipped_duplicates", duplicates) != duplicates):
             errors.append(key + ": skipped-row statistics disagree")
         if isinstance(rows, list):
             ids = [row.get("grant_id") for row in rows if isinstance(row, dict)]
@@ -72,13 +77,15 @@ def validate(root):
             errors.append(key + ": reported total below stored records")
         if not isinstance(rows, list) or any(not isinstance(row, dict) or not isinstance(row.get("data"), dict) for row in rows):
             errors.append(key + ": malformed award rows")
-        if type(n) is int and (reported is None or type(reported) is int) and snap.get("partial") != (reported is None or n < reported or invalid > 0 or duplicates > 0):
+        if type(snap.get("partial")) is not bool or (
+                type(n) is int and (reported is None or type(reported) is int) and
+                snap["partial"] != (reported is None or n < reported or invalid > 0 or duplicates > 0)):
             errors.append(key + ": incomplete-data flag is inaccurate")
         try:
             datetime.datetime.fromisoformat(snap["retrieved_utc"])
         except (KeyError, TypeError, ValueError):
             errors.append(key + ": invalid retrieval timestamp")
-    if manifest.get("updated_directions") != successes:
+    if type(manifest.get("updated_directions")) is not int or manifest["updated_directions"] != successes:
         errors.append("Manifest success count mismatch")
     expected_status = "ok" if successes == len(entries) else ("partial" if successes else "unavailable")
     if manifest.get("status") != expected_status:
