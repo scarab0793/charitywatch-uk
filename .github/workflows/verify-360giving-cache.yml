@@ -5,6 +5,8 @@ on:
     paths:
       - 'scripts/verify_360giving_cache.py'
       - 'scripts/test_360giving_cache.py'
+      - 'scripts/cache_360giving.py'
+      - 'scripts/test_360giving_collection_config.py'
       - 'assets/grant-links.js'
       - 'data/360giving/**'
       - '.github/workflows/verify-360giving-cache.yml'
@@ -12,6 +14,8 @@ on:
     paths:
       - 'scripts/verify_360giving_cache.py'
       - 'scripts/test_360giving_cache.py'
+      - 'scripts/cache_360giving.py'
+      - 'scripts/test_360giving_collection_config.py'
       - 'data/360giving/**'
       - '.github/workflows/verify-360giving-cache.yml'
   workflow_dispatch:
@@ -32,6 +36,8 @@ jobs:
           python-version: '3.12'
       - name: Check grant explorer JavaScript syntax
         run: node --check assets/grant-links.js
+      - name: Check collector limits
+        run: python3 scripts/test_360giving_collection_config.py
       - name: Run offline consistency tests
         run: python3 scripts/test_360giving_cache.py
       - name: Validate published snapshots if present
