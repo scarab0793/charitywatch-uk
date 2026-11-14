@@ -7,6 +7,7 @@ on:
       - 'scripts/smoke_test.mjs'
       - 'scripts/verify_published_data.py'
       - 'scripts/verify_search_indexes.py'
+      - 'scripts/test_search_indexes.py'
       - 'scripts/check_ccew_archives.py'
       - 'scripts/test_ccew_archives.py'
       - 'tests/browser-smoke.html'
@@ -23,6 +24,7 @@ on:
       - 'scripts/smoke_test.mjs'
       - 'scripts/verify_published_data.py'
       - 'scripts/verify_search_indexes.py'
+      - 'scripts/test_search_indexes.py'
       - 'scripts/check_ccew_archives.py'
       - 'scripts/test_ccew_archives.py'
       - 'tests/browser-smoke.html'
@@ -53,11 +55,13 @@ jobs:
         run: python3 scripts/verify_published_data.py
       - name: Check full charity name and registration search indexes
         run: python3 scripts/verify_search_indexes.py
+      - name: Test search index consistency with synthetic fixtures
+        run: python3 scripts/test_search_indexes.py
       - name: Test CCEW ZIP validation with synthetic source files
         run: python3 scripts/test_ccew_archives.py
       - name: Check import and validation Python syntax
         run: |
-          python3 -m py_compile scripts/import_ccew.py scripts/enrich_ccew_finances.py scripts/build_salary_shards.py scripts/enrich_ccew_part_b.py scripts/build_grant_makers.py scripts/build_word_index.py scripts/verify_published_data.py scripts/verify_search_indexes.py scripts/check_ccew_archives.py scripts/test_ccew_archives.py
+          python3 -m py_compile scripts/import_ccew.py scripts/enrich_ccew_finances.py scripts/build_salary_shards.py scripts/enrich_ccew_part_b.py scripts/build_grant_makers.py scripts/build_word_index.py scripts/verify_published_data.py scripts/verify_search_indexes.py scripts/test_search_indexes.py scripts/check_ccew_archives.py scripts/test_ccew_archives.py
       - name: Open real charity profile and search in headless Chrome
         run: |
           set -e
