@@ -46,6 +46,22 @@ const cwGrantCard=(row,direction,apiPageUrl='')=>{
  const title=cwGrantEscape(g.title||'Grant award');
  return '<article class="grant-award"><div class="grant-connection"><div><span class="small muted">Funder</span><b>'+cwGrantOrganisationLabel(funder)+'</b></div><span class="grant-arrow" aria-hidden="true">→</span><div><span class="small muted">Recipient</span><b>'+cwGrantOrganisationLabel(recipient)+'</b></div></div><div class="stat">'+awarded+'</div><p class="small muted">Amount awarded · '+cwGrantEscape(g.awardDate||'Award date not published')+'</p>'+paid+'<p><strong>'+title+'</strong></p>'+(g.description?'<p class="small">'+cwGrantEscape(g.description).slice(0,450)+'</p>':'')+'<p class="small muted">Grant identifier: '+identifier+'</p><p class="small muted">'+(source?'Publisher-provided data: '+source:'Original publisher URL not provided in this record')+(additional?' · Grant details: '+additional:'')+(apiSource?' · 360Giving API results page: '+apiSource:'')+'</p></article>';
 };
+const cwGrantSampleStats=rows=>{
+ let amount=0,valued=0,excluded=0;
+ const years=new Set();
+ for(const row of rows){
+  const g=row?.data;
+  if(!g||typeof g!=='object')continue;
+  if(typeof g.awardDate==='string'&&/^\\d{4}-\\d{2}-\\d{2}$/.test(g.awardDate)){
+   const date=new Date(g.awardDate+'T00:00:00Z');
+   if(Number.isFinite(date.valueOf())&&date.toISOString().slice(0,10)===g.awardDate)years.add(g.awardDate.slice(0,4));
+  }
+  if(g.currency==='GBP'&&typeof g.amountAwarded==='number'&&Number.isFinite(g.amountAwarded)&&g.amountAwarded>=0){
+   amount+=g.amountAwarded;valued++;
+  }else excluded++;
+ }
+ return {amount,valued,excluded,years:[...years].sort()};
+};
 const cwGrantAccounting=partB=>{
  const amount=partB?.expenditure_grants_institution;
  const value=Number.isFinite(amount)?cwGrantMoney(amount):'Not disclosed';
@@ -135,7 +151,10 @@ const cwGrantBinder=(region,number)=>{
    const skippedInvalid=Number.isInteger(payload.skipped_invalid)&&payload.skipped_invalid>=0?payload.skipped_invalid:0;
    const skippedDuplicates=Number.isInteger(payload.skipped_duplicates)&&payload.skipped_duplicates>=0?payload.skipped_duplicates:0;
    const exclusions=(skippedInvalid||skippedDuplicates)?' Excluded '+skippedDuplicates.toLocaleString('en-GB')+' duplicate and '+skippedInvalid.toLocaleString('en-GB')+' invalid source records.':'';
-   note.textContent='Up to '+cached.length+' source records cached from 360Giving. Award figures are not confirmed payments. Cache date: '+(payload.retrieved_utc||'not available')+'. Original Part B financial periods may differ.'+exclusions;
+   const stats=cwGrantSampleStats(cached);
+   const years=stats.years.length?' Award years in sample: '+stats.years.join(', ')+'.':' Award years not consistently reported.';
+   const valueText=stats.valued?' Sum of '+stats.valued.toLocaleString('en-GB')+' cached GBP awards: '+cwGrantMoney(stats.amount)+'.':' No cached records have a usable GBP award amount.';
+   note.textContent=cached.length.toLocaleString('en-GB')+' source records cached from 360Giving.'+valueText+' '+stats.excluded.toLocaleString('en-GB')+' records lack a usable GBP award amount.'+years+' This sample spans potentially different reporting periods and must NOT be compared with or subtracted from Charity Commission Part B expenditure. Awarded amounts are not confirmed payments. Cache date: '+(payload.retrieved_utc||'not available')+'.'+exclusions;
    if(!cached.length){
     status.textContent=reportedTotal===0?'The current 360Giving snapshot reports zero published awards in this direction. This does not prove that no grants were made.':'No award records were cached for this direction; published coverage is incomplete.';
     return;
