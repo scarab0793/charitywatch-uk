@@ -7,7 +7,6 @@ This is a capped discovery sample, not a comprehensive list or proof of payments
 """
 import datetime
 import json
-import os
 import time
 import urllib.error
 import urllib.request
@@ -16,7 +15,7 @@ from pathlib import Path
 ORG_IDS = ["GB-CHC-802052", "GB-CHC-202918", "GB-CHC-288701"]
 DIRECTIONS = ("made", "received")
 PER_PAGE = 20
-MAX_PAGES = 5
+MAX_PAGES = 2
 OUT = Path("data/360giving")
 OUT.mkdir(parents=True, exist_ok=True)
 summary = {"updated_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
@@ -33,8 +32,18 @@ for org in ORG_IDS:
             request = urllib.request.Request(endpoint, headers={
                 "Accept": "application/json", "User-Agent": "CharityWatchUK-cache/1.0"})
             try:
-                with urllib.request.urlopen(request, timeout=30) as response:
-                    payload = json.load(response)
+                payload = None
+                for attempt in range(4):
+                    try:
+                        with urllib.request.urlopen(request, timeout=30) as response:
+                            payload = json.load(response)
+                        break
+                    except urllib.error.HTTPError as exc:
+                        if exc.code not in (429, 500, 502, 503, 504) or attempt == 3:
+                            raise
+                        pause = min(30, 3 * (attempt + 1))
+                        print(f"360Giving HTTP {exc.code} for {org}/{direction}; retrying after {pause}s")
+                        time.sleep(pause)
                 if not isinstance(payload, dict) or not isinstance(payload.get("results"), list):
                     raise ValueError("360Giving returned an unexpected schema")
                 total = payload.get("count")
@@ -50,7 +59,7 @@ for org in ORG_IDS:
                         })
                 if not payload.get("next") or not payload["results"]:
                     break
-                time.sleep(0.65)
+                time.sleep(1.2)
             except (urllib.error.URLError, ValueError, TimeoutError) as exc:
                 error = type(exc).__name__ + ": " + str(exc)[:150]
                 break
@@ -78,5 +87,12 @@ for org in ORG_IDS:
         time.sleep(0.65)
 
 (OUT / "manifest.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
-if not any(x.get("updated") for x in summary["organisations"].values()):
-    raise SystemExit("No 360Giving data refreshed; preserving existing snapshots")
+successes = sum(bool(item.get("updated")) for item in summary["organisations"].values())
+summary["updated_directions"] = successes
+summary["status"] = "ok" if successes == len(summary["organisations"]) else ("partial" if successes else "unavailable")
+(OUT / "manifest.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
+print("360Giving cache status:", summary["status"], "| updated directions:", successes, "/", len(summary["organisations"]))
+# Transient provider failures must not turn every scheduled refresh into an
+# email notification. Previous valid snapshots are retained; the manifest
+# explicitly records problems instead of asserting success.
+
