@@ -53,55 +53,52 @@ const cwGrantAccounting=partB=>{
 };
 const cwGrantControls=(region,number,partB)=>{
  if(region!=='ew'||!/^\d{4,9}$/.test(String(number)))return '';
- return '<section class="grant-details" id="grant-awards"><h3>Published grant awards and recipients</h3><p class="small muted">Source: 360Giving open data, published by grantmakers. <strong>Amount awarded is not necessarily money paid.</strong> This dataset is separate from Charity Commission Part B expenditure and may cover different years. Coverage is incomplete. The API is queried only when you click.</p>'+cwGrantAccounting(partB)+'<div class="comparison-actions"><button type="button" id="grantMade" data-grant-direction="made">Grants awarded by this charity</button><button type="button" id="grantReceived" data-grant-direction="received">Grants awarded to this charity</button></div><p id="grantAwardStatus" class="small muted" aria-live="polite">Choose a direction to look for published awards.</p><div id="grantAwardRows" class="grant-awards"></div><button type="button" id="grantAwardsMore" hidden>Load 20 more awards</button><p class="small muted">If the API cannot be accessed from this browser, use the direct 360Giving links shown in the error message. The platform does not claim complete tracing of payments.</p></section>';
+ return '<section class="grant-details" id="grant-awards"><h3>Published grant awards and recipients</h3><p class="small muted">Source: 360Giving open data, published by grantmakers. <strong>Amount awarded is not necessarily money paid.</strong> This dataset is separate from Charity Commission Part B expenditure and may cover different years. Coverage is incomplete. The cached public award sample is loaded only when you click; it may not include every award.</p>'+cwGrantAccounting(partB)+'<div class="comparison-actions"><button type="button" id="grantMade" data-grant-direction="made">Grants awarded by this charity</button><button type="button" id="grantReceived" data-grant-direction="received">Grants awarded to this charity</button></div><p id="grantAwardStatus" class="small muted" aria-live="polite">Choose a direction to look for published awards.</p><div id="grantAwardRows" class="grant-awards"></div><button type="button" id="grantAwardsMore" hidden>Load 20 more awards</button><p class="small muted">If the API cannot be accessed from this browser, use the direct 360Giving links shown in the error message. The platform does not claim complete tracing of payments.</p></section>';
 };
 const cwGrantBinder=(region,number)=>{
  const box=document.getElementById('grant-awards');
  if(!box)return;
- let direction=null,offset=0,request=0,loading=false;
+ let direction=null,cached=[],offset=0,reportedTotal=null;
  const status=document.getElementById('grantAwardStatus');
  const rows=document.getElementById('grantAwardRows');
  const more=document.getElementById('grantAwardsMore');
- const fetchPage=async(reset=false)=>{
-  if(loading)return;
-  const url=cwGrantEndpoint(region,number,direction,offset);
-  if(!url)return;
-  const token=++request;
-  loading=true;more.hidden=true;
-  status.textContent='Checking published grants…';
+ const summary=document.getElementById('grantAwardSummary');
+ const note=document.getElementById('grantAwardComparisonNote');
+ const renderMore=()=>{
+  const visible=cached.slice(offset,offset+20);
+  rows.insertAdjacentHTML('beforeend',visible.map(r=>cwGrantCard(r,direction,cwGrantEndpoint(region,number,direction))).join(''));
+  offset+=visible.length;
+  const total=reportedTotal!==null?reportedTotal.toLocaleString('en-GB')+' published awards':'Published awards';
+  status.textContent=total+' · '+offset.toLocaleString('en-GB')+' of '+cached.length.toLocaleString('en-GB')+' locally cached records displayed. This is a partial sample, not the full grant history.';
+  more.hidden=offset>=cached.length;
+ };
+ const open=async(nextDirection)=>{
+  direction=nextDirection;offset=0;cached=[];rows.innerHTML='';
+  more.hidden=true;
+  status.textContent='Loading published award snapshot…';
+  summary.textContent='Loading…';
+  const apiUrl=cwGrantEndpoint(region,number,direction);
+  const snapshot='data/360giving/GB-CHC-'+number+'-'+direction+'.json';
   try{
-   const response=await fetch(url,{headers:{Accept:'application/json'}});
-   if(response.status===404){rows.innerHTML='';const summary=document.getElementById('grantAwardSummary');if(summary)summary.textContent='Organisation not found';status.textContent='No organisation record was found in the 360Giving dataset. This does not mean the charity has no grants.';return;}
-   if(response.status===429)throw Error('rate-limit');
-   if(!response.ok)throw Error('360Giving returned HTTP '+response.status);
+   const response=await fetch(snapshot,{cache:'no-store'});
+   if(!response.ok)throw Error('Snapshot not yet available');
    const payload=await response.json();
-   if(token!==request||!Array.isArray(payload.results))return;
-   const cards=payload.results.map(r=>cwGrantCard(r,direction,url)).filter(Boolean);
-   if(reset)rows.innerHTML='';
-   rows.insertAdjacentHTML('beforeend',cards.join(''));
-   offset+=payload.results.length;
-   const total=typeof payload.count==='number'?payload.count:null;
-   const summary=document.getElementById('grantAwardSummary');
-   const note=document.getElementById('grantAwardComparisonNote');
-   if(summary)summary.textContent=total===null?'Published awards count unavailable':total.toLocaleString('en-GB')+' published '+(direction==='made'?'outgoing':'incoming')+' awards';
-   if(note)note.textContent='360Giving award counts cover all published periods, not the single Charity Commission accounting period. Values should not be subtracted or reconciled as payments.';
-   status.textContent=(total!==null?total.toLocaleString('en-GB')+' published awards':'Published awards')+' · '+offset+' records loaded. Reporting coverage is not exhaustive.';
-   if(!cards.length&&reset)rows.innerHTML='<p class="muted">No published organisation grants found for this query.</p>';
-   more.hidden=!payload.next||payload.results.length===0;
-  }catch(e){
-   const external=cwGrantEndpoint(region,number,direction,offset);
-   const limit=e?.message==='rate-limit';
-   status.innerHTML=(limit?'360Giving is limiting requests (HTTP 429). Please try again shortly.':'Direct 360Giving API request unavailable (network or browser access restrictions).')+' <a href="'+cwGrantEscape(external)+'" target="_blank" rel="noopener noreferrer">Open the official API response</a>.';
-  }finally{loading=false;}
+   if(!Array.isArray(payload.results)||payload.direction!==direction)throw Error('Unexpected snapshot format');
+   cached=payload.results;reportedTotal=Number.isInteger(payload.reported_count)?payload.reported_count:null;
+   summary.textContent=reportedTotal!==null?reportedTotal.toLocaleString('en-GB')+' published '+(direction==='made'?'outgoing':'incoming')+' awards':'Published awards; total unknown';
+   note.textContent='Up to '+cached.length+' source records cached from 360Giving. Award figures are not confirmed payments. Cache date: '+(payload.retrieved_utc||'not available')+'. Original Part B financial periods may differ.';
+   if(!cached.length){
+    status.textContent='No published grants found in this snapshot; coverage may be incomplete.';
+    return;
+   }
+   renderMore();
+  }catch(_){
+   summary.textContent='No locally cached records';
+   status.innerHTML='This charity has no current local award snapshot. <a href="'+cwGrantEscape(apiUrl)+'" target="_blank" rel="noopener noreferrer">Open 360Giving official API</a> for the original records (the API may not be viewable inside some browsers).';
+  }
  };
  for(const button of box.querySelectorAll('[data-grant-direction]')){
-  button.addEventListener('click',()=>{
-   if(loading)return;
-   direction=button.dataset.grantDirection;
-   offset=0;rows.innerHTML='';
-   const summary=document.getElementById('grantAwardSummary');if(summary)summary.textContent='Loading…';
-   fetchPage(true);
-  });
+  button.addEventListener('click',()=>open(button.dataset.grantDirection));
  }
- more.addEventListener('click',()=>fetchPage());
+ more.addEventListener('click',renderMore);
 };
