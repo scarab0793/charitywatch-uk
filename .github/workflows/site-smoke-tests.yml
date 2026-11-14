@@ -5,6 +5,7 @@ on:
       - 'index.html'
       - 'assets/**'
       - 'scripts/smoke_test.mjs'
+      - 'tests/browser-smoke.html'
       - 'data/verified-ceo-pay.json'
       - '.github/workflows/site-smoke-tests.yml'
   pull_request:
@@ -31,3 +32,27 @@ jobs:
         run: python3 scripts/verify_salary_shards.py
       - name: Verified CEO disclosure source checks
         run: python3 scripts/validate_ceo_pay.py
+      - name: Open real charity profile and search in headless Chrome
+        run: |
+          set -e
+          python3 -m http.server 8765 --bind 127.0.0.1 > /tmp/charitywatch-http.log 2>&1 &
+          sleep 2
+          CHROME=$(command -v google-chrome || command -v chromium || command -v chromium-browser)
+          test -n "$CHROME"
+          timeout 65 "$CHROME" --headless --disable-gpu --no-sandbox --disable-dev-shm-usage --virtual-time-budget=30000 --dump-dom http://127.0.0.1:8765/tests/browser-smoke.html > /tmp/charitywatch-browser.html 2>/tmp/charitywatch-chrome.log
+          if ! grep -q 'data-test-result="PASS"' /tmp/charitywatch-browser.html; then
+            grep -o 'data-test-result="[^"]*"[^<]*>[^<]*' /tmp/charitywatch-browser.html || true
+            tail -n 30 /tmp/charitywatch-chrome.log || true
+            exit 1
+          fi
+          echo 'PASS: browser loaded live local app data and verified profile, salary bands and search'
+      - name: Upload browser diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: charitywatch-browser-test-diagnostics
+          path: |
+            /tmp/charitywatch-browser.html
+            /tmp/charitywatch-chrome.log
+            /tmp/charitywatch-http.log
+          if-no-files-found: ignore
