@@ -5,6 +5,9 @@ on:
       - '.github/workflows/build-grant-makers.yml'
       - 'scripts/build_grant_makers.py'
   workflow_dispatch:
+concurrency:
+  group: charitywatch-data-writes
+  cancel-in-progress: false
 permissions:
   contents: write
 jobs:
@@ -25,5 +28,6 @@ jobs:
           git add data/grant-makers-ew.json data/grant-makers-meta-ew.json
           if ! git diff --cached --quiet; then
             git commit -m "Publish sourced grant-making totals"
-            git push
+            git pull --rebase origin main
+            git push origin HEAD:main
           fi
