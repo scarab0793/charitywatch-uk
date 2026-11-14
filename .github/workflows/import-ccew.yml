@@ -148,6 +148,7 @@ jobs:
         run: |
           python scripts/verify_salary_shards.py
           python scripts/verify_published_data.py
+          python scripts/verify_search_indexes.py
       - name: Commit verified directory
         id: publish
         run: |
