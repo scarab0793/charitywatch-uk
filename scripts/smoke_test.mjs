@@ -22,6 +22,9 @@ for(const id of ['searchForm','q','region','results','suggestions','charityProfi
  assert.ok(html.includes('id="'+id+'"'),'Missing UI element: '+id);
 }
 assert.ok(html.includes('assets/charts.js'),'Charts script not loaded');
+assert.ok(html.includes('id="grantSnapshotStatus"'),'360Giving cache freshness status element missing');
+assert.ok(html.includes('const loadGrantSnapshotStatus=async()=>')&&html.includes('loadGrantSnapshotStatus();'),'360Giving cache freshness loader not wired');
+assert.ok(html.includes('This is a partial published-awards sample, not verified payments or complete grant coverage.'),'360Giving coverage disclaimer missing');
 assert.ok(html.includes('await Promise.all(rows.map(x=>attachSalaryData(x,searchRegion,searchManifest)))'),
  'Search result cards must load official salary shards');
 assert.ok(html.includes('salarySnippet(x)'),'Search result cards must show salary bands');
