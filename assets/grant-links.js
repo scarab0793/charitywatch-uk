@@ -1,6 +1,7 @@
 /* 360Giving published grant awards. Do NOT confuse awards with payments.
- * Requests are user-initiated (API rate limit: 2 requests/second/IP).
- * We do not store grants: publisher takedowns and updates stay effective. */
+ * This static site displays bounded snapshots checked into data/360giving.
+ * Publication timestamps and coverage warnings must remain visible.
+ * Cached grants may lag publisher corrections or takedowns. */
 const cwGrantEscape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cwGrantMoney=n=>Number.isFinite(n)?new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP',maximumFractionDigits:0}).format(n):'Not reported';
 const cwGrantEndpoint=(region,number,direction,offset=0)=>{
