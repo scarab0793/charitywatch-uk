@@ -468,11 +468,20 @@ const cardCEOPay=(region,number)=>{
  const link='<a href="'+escapeHTML(latest.source_url)+'" target="_blank" rel="noopener" title="'+escapeHTML(latest.source_label||'Primary annual accounts')+'">Annual report</a>';
  return '<div>CEO remuneration: <strong>'+money(latest.amount)+'</strong><p class="small muted">Period end: '+escapeHTML(latest.period_end)+' · '+link+'<br>Reported basis: '+escapeHTML(entry.measure||'As disclosed')+'</p></div>';
 };
+const salarySnippet=x=>{
+ const p=x.annual_return_part_a;
+ if(!p?.salary_bands)return '<p class="small muted">Official employee salary bands: no linked report for this charity.</p>';
+ const available=Object.values(p.salary_bands).some(n=>typeof n==='number');
+ if(!available)return '<p class="small muted">Employee salary-band counts were not disclosed in the linked annual return.</p>';
+ const positive=Object.entries(p.salary_bands).filter(([_,n])=>typeof n==='number'&&n>0);
+ const total=positive.reduce((sum,[_,n])=>sum+n,0);
+ return '<details><summary>Employees earning above £60,000: '+total.toLocaleString('en-GB')+'</summary><p class="small muted">CCEW Part A; financial period ending '+escapeHTML(p.period_end||'unknown')+'. Salary-band counts are not named CEO salaries.</p>'+ (positive.length?'<ul>'+positive.map(([band,n])=>'<li>'+escapeHTML((salaryBands.find(x=>x[0]===band)||[band,band])[1])+': '+n.toLocaleString('en-GB')+'</li>').join('')+'</ul>':'<p class="small muted">No positive salary counts reported.</p>')+'</details>';
+};
 const renderCharityCard=x=>{
  const region=searchRegion;
  const source=x.financial_source?'Charity Commission annual return history':'No financial return linked';
     const official=region==='ew'?'https://register-of-charities.charitycommission.gov.uk/en/charity-search/-/charity-details/'+encodeURIComponent(x.number):links[region];
-    return '<div class="card" style="margin:9px 0"><b>'+escapeHTML(x.name)+'</b><p class="small muted">Registration: '+escapeHTML(x.number)+' · '+escapeHTML(x.jurisdiction)+' · Financial period end: '+escapeHTML(x.year||'Not reported')+'</p><div class="cards"><div>Gross income: <strong>'+money(x.income)+'</strong></div><div>Gross expenditure: <strong>'+money(x.expenditure)+'</strong></div>'+cardCEOPay(region,x.number)+'</div><p class="small muted">Source: '+escapeHTML(source)+' · <a href="'+escapeHTML(official)+'" target="_blank" rel="noopener">Official charity register</a></p>'+trend(x)+partA(x)+'<p><button type="button" data-profile="'+escapeHTML(x.number)+'" data-region="'+escapeHTML(region)+'">View full profile</button> <button type="button" data-add="'+escapeHTML(x.number)+'">Add to comparison</button></p></div>';
+    return '<div class="card" style="margin:9px 0"><b>'+escapeHTML(x.name)+'</b><p class="small muted">Registration: '+escapeHTML(x.number)+' · '+escapeHTML(x.jurisdiction)+' · Financial period end: '+escapeHTML(x.year||'Not reported')+'</p><div class="cards"><div>Gross income: <strong>'+money(x.income)+'</strong></div><div>Gross expenditure: <strong>'+money(x.expenditure)+'</strong></div>'+cardCEOPay(region,x.number)+'</div><p class="small muted">Source: '+escapeHTML(source)+' · <a href="'+escapeHTML(official)+'" target="_blank" rel="noopener">Official charity register</a></p>'+salarySnippet(x)+'<p><button type="button" data-profile="'+escapeHTML(x.number)+'" data-region="'+escapeHTML(region)+'">View full profile</button> <button type="button" data-add="'+escapeHTML(x.number)+'">Add to comparison</button></p></div>';
 };
 const renderNextPage=async()=>{
  const pageToken=searchVersion;
@@ -482,6 +491,8 @@ const renderNextPage=async()=>{
  const end=Math.min(searchOffset+RESULTS_PER_PAGE,searchCandidates.length);
  const rows=await fullRows(searchCandidates.slice(start,end));
  await getVerifiedPayIndex();
+ await Promise.all(rows.map(x=>attachSalaryData(x,searchRegion,searchManifest)));
+ if(pageToken!==searchVersion)return;
  if(pageToken!==searchVersion)return;
  searchOffset=end;
  window.currentMatches=(window.currentMatches||[]).concat(rows);
