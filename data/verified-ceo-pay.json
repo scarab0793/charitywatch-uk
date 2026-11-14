@@ -118,6 +118,26 @@
         }
       ],
       "caution": "The charity explicitly describes this as total remuneration for 1 April 2025 to 31 March 2026. It is not directly comparable with salary-only disclosures from other charities. Previous-period values require separate verification."
+    },
+    "ew:209603": {
+      "name": "ROYAL NATIONAL LIFEBOAT INSTITUTION",
+      "measure": "Chief Executive aggregate employee benefits including salary, employer National Insurance, employer pension contributions and other benefits",
+      "basis_category": "aggregate_employee_benefits",
+      "currency": "GBP",
+      "periods": [
+        {
+          "period_end": "2025-12-31",
+          "amount": 217302,
+          "salary": 170900,
+          "employer_ni": 18667,
+          "employer_pension": 24235,
+          "other_benefits": 3500,
+          "source_url": "https://rnli.org/-/media/rnli/downloads/about_us/agm/2026/annual_report_and_accounts_2025.pdf?rev=d15ac1613ac340528a260a1ac927c81a",
+          "source_label": "RNLI Report and Accounts 2025, Note 3, Chief Executive Peter Sparkes aggregate employee benefits",
+          "page": 48
+        }
+      ],
+      "caution": "The £217,302 is the 2025 aggregate employment package, NOT the CEO's take-home pay or annual salary. The £170,900 salary paid in the reporting year is described as equivalent to £175,000 per annum. The 2024 comparative relates to a partial year following the CEO's appointment in June 2024 and is not included as a like-for-like trend."
     }
   }
 }
