@@ -65,7 +65,9 @@ def validate(root):
                 errors.append(key + ": invalid page size")
                 continue
             rows = []
-            for page_name in pages:
+            if len(pages) > (limit + size - 1) // size:
+                errors.append(key + ": snapshot has too many pages")
+            for page_index, page_name in enumerate(pages):
                 try:
                     chunk = json.loads((root / page_name).read_text(encoding="utf-8"))
                 except (OSError, ValueError) as exc:
@@ -75,6 +77,8 @@ def validate(root):
                 if not isinstance(part, list) or not 1 <= len(part) <= size:
                     errors.append(key + ": malformed page contents")
                     continue
+                if page_index < len(pages) - 1 and len(part) != size:
+                    errors.append(key + ": non-final page has incorrect length")
                 rows.extend(part)
             if len(pages) != (len(rows) + size - 1) // size:
                 errors.append(key + ": snapshot page count mismatch")
