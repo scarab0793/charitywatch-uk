@@ -15,6 +15,7 @@ on:
       - 'assets/grant-links.js'
       - 'data/verified-ceo-pay.json'
       - 'scripts/test_verified_ceo_pay.py'
+      - 'scripts/test_inline_js.py'
       - 'index.html'
       - 'data/360giving/**'
       - '.github/workflows/verify-360giving-cache.yml'
@@ -49,6 +50,8 @@ jobs:
           python-version: '3.12'
       - name: Check grant explorer JavaScript syntax
         run: node --check assets/grant-links.js
+      - name: Check embedded homepage JavaScript syntax
+        run: python3 scripts/test_inline_js.py
       - name: Validate sourced CEO pay catalogue
         run: python3 scripts/test_verified_ceo_pay.py
       - name: Check collector limits
