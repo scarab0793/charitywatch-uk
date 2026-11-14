@@ -58,7 +58,7 @@ const cwGrantControls=(region,number,partB)=>{
 const cwGrantBinder=(region,number)=>{
  const box=document.getElementById('grant-awards');
  if(!box)return;
- let direction=null,cached=[],offset=0,reportedTotal=null;
+ let direction=null,cached=[],offset=0,reportedTotal=null,requestVersion=0;
  const status=document.getElementById('grantAwardStatus');
  const rows=document.getElementById('grantAwardRows');
  const more=document.getElementById('grantAwardsMore');
@@ -73,7 +73,8 @@ const cwGrantBinder=(region,number)=>{
   more.hidden=offset>=cached.length;
  };
  const open=async(nextDirection)=>{
-  direction=nextDirection;offset=0;cached=[];rows.innerHTML='';
+  const currentRequest=++requestVersion;
+  direction=nextDirection;offset=0;cached=[];reportedTotal=null;rows.innerHTML='';
   more.hidden=true;
   status.textContent='Loading published award snapshot…';
   summary.textContent='Loading…';
@@ -83,7 +84,8 @@ const cwGrantBinder=(region,number)=>{
    const response=await fetch(snapshot,{cache:'no-store'});
    if(!response.ok)throw Error('Snapshot not yet available');
    const payload=await response.json();
-   if(!Array.isArray(payload.results)||payload.direction!==direction)throw Error('Unexpected snapshot format');
+   if(currentRequest!==requestVersion)return;
+   if(!Array.isArray(payload.results)||payload.direction!==nextDirection)throw Error('Unexpected snapshot format');
    cached=payload.results;reportedTotal=Number.isInteger(payload.reported_count)?payload.reported_count:null;
    summary.textContent=reportedTotal!==null?reportedTotal.toLocaleString('en-GB')+' published '+(direction==='made'?'outgoing':'incoming')+' awards':'Published awards; total unknown';
    note.textContent='Up to '+cached.length+' source records cached from 360Giving. Award figures are not confirmed payments. Cache date: '+(payload.retrieved_utc||'not available')+'. Original Part B financial periods may differ.';
@@ -93,6 +95,7 @@ const cwGrantBinder=(region,number)=>{
    }
    renderMore();
   }catch(_){
+   if(currentRequest!==requestVersion)return;
    summary.textContent='No locally cached records';
    status.innerHTML='This charity has no current local award snapshot. <a href="'+cwGrantEscape(apiUrl)+'" target="_blank" rel="noopener noreferrer">Open 360Giving official API</a> for the original records (the API may not be viewable inside some browsers).';
   }
