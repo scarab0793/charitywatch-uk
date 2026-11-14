@@ -103,7 +103,23 @@ const cwGrantBinder=(region,number)=>{
    if(!response.ok)throw Error('Snapshot not yet available');
    const payload=await response.json();
    if(currentRequest!==requestVersion)return;
-   if(!Array.isArray(payload.results)||payload.direction!==nextDirection||payload.organisation_id!=='GB-CHC-'+number)throw Error('Unexpected snapshot identity or format');
+   if(payload.direction!==nextDirection||payload.organisation_id!=='GB-CHC-'+number)throw Error('Unexpected snapshot identity');
+   if(Array.isArray(payload.pages)){
+    const expectedPrefix='GB-CHC-'+number+'-'+nextDirection+'-p';
+    if(!Number.isInteger(payload.page_size)||payload.page_size<1||payload.page_size>100||
+       payload.pages.some((name,i)=>name!==expectedPrefix+(i+1)+'.json')||
+       payload.pages.length>100)throw Error('Invalid published page references');
+    const pageResults=await Promise.all(payload.pages.map(async name=>{
+     const pageResponse=await fetch('data/360giving/'+name,{cache:'no-store'});
+     if(!pageResponse.ok)throw Error('Award page unavailable');
+     const page=await pageResponse.json();
+     if(!Array.isArray(page.results)||page.results.length<1||page.results.length>payload.page_size)throw Error('Invalid award page');
+     return page.results;
+    }));
+    if(currentRequest!==requestVersion)return;
+    payload.results=pageResults.flat();
+   }
+   if(!Array.isArray(payload.results))throw Error('Unexpected snapshot format');
    if(!Number.isInteger(payload.records_cached)||payload.records_cached!==payload.results.length)throw Error('Snapshot record count mismatch');
    if(payload.reported_count!==null&&(!Number.isInteger(payload.reported_count)||payload.reported_count<payload.results.length))throw Error('Invalid reported award count');
    const excluded=(Number.isInteger(payload.skipped_invalid)&&payload.skipped_invalid>0)||(Number.isInteger(payload.skipped_duplicates)&&payload.skipped_duplicates>0);
