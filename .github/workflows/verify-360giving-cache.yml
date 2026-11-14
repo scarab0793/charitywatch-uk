@@ -7,6 +7,7 @@ on:
       - 'scripts/test_360giving_cache.py'
       - 'scripts/cache_360giving.py'
       - 'scripts/test_360giving_collection_config.py'
+      - 'scripts/test_360giving_pages.py'
       - 'assets/grant-links.js'
       - 'data/360giving/**'
       - '.github/workflows/verify-360giving-cache.yml'
@@ -16,6 +17,7 @@ on:
       - 'scripts/test_360giving_cache.py'
       - 'scripts/cache_360giving.py'
       - 'scripts/test_360giving_collection_config.py'
+      - 'scripts/test_360giving_pages.py'
       - 'data/360giving/**'
       - '.github/workflows/verify-360giving-cache.yml'
   workflow_dispatch:
@@ -40,6 +42,8 @@ jobs:
         run: python3 scripts/test_360giving_collection_config.py
       - name: Run offline consistency tests
         run: python3 scripts/test_360giving_cache.py
+      - name: Test paged snapshots and migration compatibility
+        run: python3 scripts/test_360giving_pages.py
       - name: Validate published snapshots if present
         shell: bash
         run: |
