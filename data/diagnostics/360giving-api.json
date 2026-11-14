@@ -1,0 +1,59 @@
+{
+  "checked_utc": "2026-11-14T08:35:54.690826+00:00",
+  "purpose": "360Giving API endpoint, response shape and browser CORS compatibility",
+  "results": [
+    {
+      "organisation_id": "GB-CHC-802052",
+      "endpoint": "https://api.threesixtygiving.org/api/v1/org/GB-CHC-802052/grants_made/?limit=1&offset=0",
+      "http_status": 200,
+      "cors_allow_origin": null,
+      "root_type": "dict",
+      "root_keys": [
+        "count",
+        "next",
+        "previous",
+        "results"
+      ],
+      "results_array": true,
+      "result_keys": [
+        "additional_data_metadata",
+        "data",
+        "data_license",
+        "funders",
+        "grant_id",
+        "publisher",
+        "recipients"
+      ],
+      "data_keys": [
+        "amountAwarded",
+        "awardDate",
+        "currency",
+        "dataSource",
+        "dateModified",
+        "description",
+        "fundingOrganization",
+        "grantProgramme",
+        "id",
+        "plannedDates",
+        "recipientOrganization",
+        "title"
+      ],
+      "reported_count": 9551
+    },
+    {
+      "organisation_id": "GB-CHC-202918",
+      "endpoint": "https://api.threesixtygiving.org/api/v1/org/GB-CHC-202918/grants_made/?limit=1&offset=0",
+      "http_status": 200,
+      "cors_allow_origin": null,
+      "root_type": "dict",
+      "root_keys": [
+        "count",
+        "next",
+        "previous",
+        "results"
+      ],
+      "results_array": true,
+      "reported_count": 0
+    }
+  ]
+}
