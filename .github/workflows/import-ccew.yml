@@ -157,12 +157,27 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/ew data/words/ew data/pay/ew data/grant-makers-ew.json data/grant-makers-meta-ew.json data/manifest-ew.json
-          if ! git diff --cached --quiet; then
+          # Worktree already contains the fully validated new data. Never
+          # rebase the bulk data commit: this can conflict with other writers.
+          # A mixed reset updates the commit base but preserves generated files.
+          set -e
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git reset --mixed origin/main
+            git add -A -- data/ew data/words/ew data/pay/ew data/grant-makers-ew.json data/grant-makers-meta-ew.json data/manifest-ew.json
+            if git diff --cached --quiet; then
+              echo "No official charity dataset changes to publish"
+              exit 0
+            fi
             git commit -m "Refresh CCEW charity directory and annual finances"
-            git pull --rebase origin main
-            git push origin HEAD:main
-          fi
+            if git push origin HEAD:main; then
+              echo "Validated charity data published on attempt $attempt"
+              exit 0
+            fi
+            echo "Publication raced another commit; retrying against latest main"
+          done
+          echo "Could not publish validated data after 3 attempts" >&2
+          exit 1
       - name: Summarise failed import step
         if: failure()
         env:
