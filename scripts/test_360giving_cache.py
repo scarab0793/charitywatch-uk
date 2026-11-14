@@ -72,6 +72,24 @@ with tempfile.TemporaryDirectory() as tmp:
     manifest["organisations"][key]["reported_count"]=10
     source.write_text(json.dumps(snapshot),encoding="utf-8")
     path.write_text(json.dumps(manifest),encoding="utf-8")
+    snapshot["partial"]="true"
+    source.write_text(json.dumps(snapshot),encoding="utf-8")
+    assert any("incomplete-data flag" in message for message in validate(folder))
+    snapshot["partial"]=True
+    source.write_text(json.dumps(snapshot),encoding="utf-8")
+    manifest["updated_directions"]=True
+    path.write_text(json.dumps(manifest),encoding="utf-8")
+    assert any("Manifest success count" in message for message in validate(folder))
+    manifest["updated_directions"]=1
+    manifest["organisations"][key]["records_cached"]=True
+    path.write_text(json.dumps(manifest),encoding="utf-8")
+    assert any("manifest snapshot counts" in message for message in validate(folder))
+    manifest["organisations"][key]["records_cached"]=1
+    manifest["organisations"][key]["skipped_invalid"]=True
+    path.write_text(json.dumps(manifest),encoding="utf-8")
+    assert any("skipped-row statistics" in message for message in validate(folder))
+    manifest["organisations"][key]["skipped_invalid"]=2
+    path.write_text(json.dumps(manifest),encoding="utf-8")
     snapshot["results"].append({"grant_id":"test","data":{"id":"test"}})
     snapshot["records_cached"]=2
     manifest["organisations"][key]["records_cached"]=2
