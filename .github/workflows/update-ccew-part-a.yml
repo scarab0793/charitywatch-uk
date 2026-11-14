@@ -10,7 +10,7 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: official-ccew-import
+  group: charitywatch-data-writes
   cancel-in-progress: false
 jobs:
   update:
@@ -93,7 +93,8 @@ jobs:
           fi
           if ! git diff --cached --quiet; then
             git commit -m "Record Part A salary import outcome"
-            git push
+            git pull --rebase origin main
+            git push origin HEAD:main
           fi
       - name: Fail workflow if data was not validated
         if: always()
