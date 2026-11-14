@@ -1,9 +1,5 @@
 name: Cache 360Giving published grant awards
 on:
-  push:
-    paths:
-      - 'scripts/cache_360giving.py'
-      - '.github/workflows/cache-360giving.yml'
   schedule:
     - cron: '22 5 * * 2'
   workflow_dispatch:
@@ -23,6 +19,20 @@ jobs:
           python-version: '3.12'
       - name: Retrieve selected organisation grant awards
         run: python scripts/cache_360giving.py
+      - name: Summarise cache health
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          m=json.loads(Path('data/360giving/manifest.json').read_text())
+          label=m['status']
+          message=f"360Giving refresh: {label} ({m['updated_directions']} of {len(m['organisations'])} directions refreshed)"
+          print(message)
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as out:
+              out.write('### '+message+'\\n')
+              if label!='ok':
+                  out.write('Some sources were unavailable; existing cache files were retained.\\n')
+          PY
       - name: Commit checked public grant snapshots
         run: |
           git config user.name "github-actions[bot]"
