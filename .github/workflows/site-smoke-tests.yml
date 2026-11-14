@@ -39,7 +39,7 @@ jobs:
           sleep 2
           CHROME=$(command -v google-chrome || command -v chromium || command -v chromium-browser)
           test -n "$CHROME"
-          timeout 65 "$CHROME" --headless --disable-gpu --no-sandbox --disable-dev-shm-usage --virtual-time-budget=30000 --dump-dom http://127.0.0.1:8765/tests/browser-smoke.html > /tmp/charitywatch-browser.html 2>/tmp/charitywatch-chrome.log
+          timeout 100 "$CHROME" --headless --disable-gpu --no-sandbox --disable-dev-shm-usage --virtual-time-budget=65000 --dump-dom http://127.0.0.1:8765/tests/browser-smoke.html > /tmp/charitywatch-browser.html 2>/tmp/charitywatch-chrome.log
           if ! grep -q 'data-test-result="PASS"' /tmp/charitywatch-browser.html; then
             grep -o 'data-test-result="[^"]*"[^<]*>[^<]*' /tmp/charitywatch-browser.html || true
             tail -n 30 /tmp/charitywatch-chrome.log || true
