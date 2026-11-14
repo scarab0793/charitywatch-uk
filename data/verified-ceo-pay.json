@@ -25,7 +25,8 @@
           "source_label": "2024 Annual Report and Accounts, comparative 2023 Chief Executive emoluments"
         }
       ],
-      "caution": "The accounts disclose a role-level amount; these figures alone do not establish the name of the pay recipient or separate employer pension contributions."
+      "caution": "The accounts disclose a role-level amount; these figures alone do not establish the name of the pay recipient or separate employer pension contributions.",
+      "basis_category": "emoluments"
     },
     "ew:202918": {
       "name": "OXFAM",
@@ -54,7 +55,8 @@
           "page": 88
         }
       ],
-      "caution": "The table reports gross pay for the CEO role, excluding employer NI and pension. 2023/24 involved a leadership transition; the figure is pay for individuals in the CEO role, not necessarily one person's full-year salary."
+      "caution": "The table reports gross pay for the CEO role, excluding employer NI and pension. 2023/24 involved a leadership transition; the figure is pay for individuals in the CEO role, not necessarily one person's full-year salary.",
+      "basis_category": "gross_pay"
     },
     "ew:288701": {
       "name": "WATERAID",
@@ -76,7 +78,8 @@
           "page": 68
         }
       ],
-      "caution": "This figure includes employer National Insurance and taxable benefits in kind, unlike gross pay at Oxfam. Employer pension contributions are excluded. WaterAid's later annual reports may contain newer figures."
+      "caution": "This figure includes employer National Insurance and taxable benefits in kind, unlike gross pay at Oxfam. Employer pension contributions are excluded. WaterAid's later annual reports may contain newer figures.",
+      "basis_category": "salary_benefits_employer_ni"
     }
   }
 }
