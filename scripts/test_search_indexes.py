@@ -42,7 +42,17 @@ with tempfile.TemporaryDirectory() as temp:
     try:
         check(data, minimum=1)
     except ValueError as error:
-        assert "Name mismatch" in str(error), str(error)
+        assert "Profile mismatch" in str(error), str(error)
     else:
         raise AssertionError("Mismatched charity name was not detected")
+    # An unchanged display name with different finances must also fail.
+    changed_finances = dict(records[0], income=987654)
+    write(data / "ew" / "numbers", number_shard,
+          [changed_finances if row["number"] == changed_finances["number"] else row for row in original])
+    try:
+        check(data, minimum=1)
+    except ValueError as error:
+        assert "Profile mismatch" in str(error), str(error)
+    else:
+        raise AssertionError("Mismatched financial profile was not detected")
 print("PASS: registration/name shard parity and mismatches are detected")
