@@ -26,7 +26,7 @@ const cwGrantOrganisationLabel=org=>{
  const name=cwGrantEscape(org.name);
  return org.registered?'<a href="#charity/ew/'+org.registered+'">'+name+'</a>':name;
 };
-const cwGrantCard=(row,direction)=>{
+const cwGrantCard=(row,direction,apiPageUrl='')=>{
  const g=row?.data;
  if(!g||typeof g!=='object')return '';
  const funder=cwGrantOrganisation(g.fundingOrganization,'Funding organisation not stated');
@@ -36,11 +36,13 @@ const cwGrantCard=(row,direction)=>{
  const awarded=currency==='GBP'?cwGrantMoney(amount):Number.isFinite(amount)?cwGrantEscape(amount.toLocaleString('en-GB'))+' '+cwGrantEscape(currency||'currency unspecified'):'Not reported';
  const disbursed=g.amountDisbursed;
  const paid=Number.isFinite(disbursed)?'<p class="small muted">Amount disbursed, where separately reported: '+(currency==='GBP'?cwGrantMoney(disbursed):cwGrantEscape(disbursed.toLocaleString('en-GB'))+' '+cwGrantEscape(currency))+'</p>':'';
- const source=cwGrantSourceLink(g.dataSource);
+ const providedSource=g.dataSource||row?.data_source?.url||row?.additional_data?.data_source?.url||row?.additional_data?.data_source?.source_url;
+ const source=cwGrantSourceLink(providedSource);
  const additional=cwGrantSourceLink(g.url);
+ const apiSource=cwGrantSourceLink(apiPageUrl);
  const identifier=cwGrantEscape(g.id||row.grant_id||'Not provided');
  const title=cwGrantEscape(g.title||'Grant award');
- return '<article class="grant-award"><div class="grant-connection"><div><span class="small muted">Funder</span><b>'+cwGrantOrganisationLabel(funder)+'</b></div><span class="grant-arrow" aria-hidden="true">→</span><div><span class="small muted">Recipient</span><b>'+cwGrantOrganisationLabel(recipient)+'</b></div></div><div class="stat">'+awarded+'</div><p class="small muted">Amount awarded · '+cwGrantEscape(g.awardDate||'Award date not published')+'</p>'+paid+'<p><strong>'+title+'</strong></p>'+(g.description?'<p class="small">'+cwGrantEscape(g.description).slice(0,450)+'</p>':'')+'<p class="small muted">Grant identifier: '+identifier+'</p><p class="small muted">'+(source?'Data publisher: '+source:'Data publisher URL not provided')+(additional?' · Grant details: '+additional:'')+'</p></article>';
+ return '<article class="grant-award"><div class="grant-connection"><div><span class="small muted">Funder</span><b>'+cwGrantOrganisationLabel(funder)+'</b></div><span class="grant-arrow" aria-hidden="true">→</span><div><span class="small muted">Recipient</span><b>'+cwGrantOrganisationLabel(recipient)+'</b></div></div><div class="stat">'+awarded+'</div><p class="small muted">Amount awarded · '+cwGrantEscape(g.awardDate||'Award date not published')+'</p>'+paid+'<p><strong>'+title+'</strong></p>'+(g.description?'<p class="small">'+cwGrantEscape(g.description).slice(0,450)+'</p>':'')+'<p class="small muted">Grant identifier: '+identifier+'</p><p class="small muted">'+(source?'Publisher-provided data: '+source:'Original publisher URL not provided in this record')+(additional?' · Grant details: '+additional:'')+(apiSource?' · 360Giving API record page: '+apiSource:'')+'</p></article>';
 };
 const cwGrantAccounting=partB=>{
  const amount=partB?.expenditure_grants_institution;
@@ -69,10 +71,11 @@ const cwGrantBinder=(region,number)=>{
   try{
    const response=await fetch(url,{headers:{Accept:'application/json'}});
    if(response.status===404){rows.innerHTML='';const summary=document.getElementById('grantAwardSummary');if(summary)summary.textContent='Organisation not found';status.textContent='No organisation record was found in the 360Giving dataset. This does not mean the charity has no grants.';return;}
+   if(response.status===429)throw Error('rate-limit');
    if(!response.ok)throw Error('360Giving returned HTTP '+response.status);
    const payload=await response.json();
    if(token!==request||!Array.isArray(payload.results))return;
-   const cards=payload.results.map(r=>cwGrantCard(r,direction)).filter(Boolean);
+   const cards=payload.results.map(r=>cwGrantCard(r,direction,url)).filter(Boolean);
    if(reset)rows.innerHTML='';
    rows.insertAdjacentHTML('beforeend',cards.join(''));
    offset+=payload.results.length;
@@ -86,7 +89,8 @@ const cwGrantBinder=(region,number)=>{
    more.hidden=!payload.next||payload.results.length===0;
   }catch(e){
    const external=cwGrantEndpoint(region,number,direction,offset);
-   status.innerHTML='Direct 360Giving API request unavailable (network, rate limit or browser access restrictions). <a href="'+cwGrantEscape(external)+'" target="_blank" rel="noopener noreferrer">View these published records at 360Giving</a>.';
+   const limit=e?.message==='rate-limit';
+   status.innerHTML=(limit?'360Giving is limiting requests (HTTP 429). Please try again shortly.':'Direct 360Giving API request unavailable (network or browser access restrictions).')+' <a href="'+cwGrantEscape(external)+'" target="_blank" rel="noopener noreferrer">Open the official API response</a>.';
   }finally{loading=false;}
  };
  for(const button of box.querySelectorAll('[data-grant-direction]')){
