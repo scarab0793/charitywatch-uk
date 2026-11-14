@@ -60,6 +60,7 @@ def validate(root):
         duplicates = snap.get("skipped_duplicates", 0)
         if any(not isinstance(v, int) or isinstance(v, bool) or v < 0 for v in (invalid, duplicates)):
             errors.append(key + ": invalid skipped-row counts")
+            invalid, duplicates = 0, 0
         if detail.get("skipped_invalid", invalid) != invalid or detail.get("skipped_duplicates", duplicates) != duplicates:
             errors.append(key + ": skipped-row statistics disagree")
         if isinstance(rows, list):
