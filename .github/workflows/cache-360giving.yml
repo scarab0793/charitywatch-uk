@@ -33,13 +33,32 @@ jobs:
               if label!='ok':
                   out.write('Some sources were unavailable; existing cache files were retained.\\n')
           PY
-      - name: Commit checked public grant snapshots
+      - name: Commit checked public grant snapshots safely
         run: |
+          set -e
+          # The next scheduled run should not fail just because the main
+          # branch changed between checkout and publication.
+          mkdir -p /tmp/charitywatch-grants
+          cp -a data/360giving/. /tmp/charitywatch-grants/
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/360giving
-          if ! git diff --cached --quiet; then
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git reset --hard origin/main
+            mkdir -p data/360giving
+            cp -a /tmp/charitywatch-grants/. data/360giving/
+            git add -A data/360giving
+            if git diff --cached --quiet; then
+              echo "360Giving snapshots are already up to date."
+              exit 0
+            fi
             git commit -m "Refresh public 360Giving award snapshots"
-            git pull --rebase origin main
-            git push origin HEAD:main
-          fi
+            if git push origin HEAD:main; then
+              echo "Published 360Giving snapshots successfully."
+              exit 0
+            fi
+            echo "Main branch moved during publication; retrying against latest main (attempt $attempt)."
+            sleep 3
+          done
+          echo "::error::Could not publish the refreshed snapshots after three attempts."
+          exit 1
