@@ -44,6 +44,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: charitywatch-smoke-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   smoke:
     runs-on: ubuntu-latest
