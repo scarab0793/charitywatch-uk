@@ -1,0 +1,32 @@
+{
+  "source": "CCEW annual return Part B",
+  "field": "expenditure_grants_institution",
+  "record_count": 5868,
+  "total_reported_across_distinct_periods": 18355593713.0,
+  "most_recent_period_end": "2026-06-30",
+  "earliest_period_end": "2007-02-28",
+  "year_end_counts": {
+    "2025": 3694,
+    "2024": 506,
+    "2026": 303,
+    "2014": 35,
+    "2008": 31,
+    "2010": 31,
+    "2023": 334,
+    "2022": 264,
+    "2011": 35,
+    "2015": 36,
+    "2021": 226,
+    "2018": 55,
+    "2017": 50,
+    "2016": 60,
+    "2019": 37,
+    "2020": 39,
+    "2009": 40,
+    "2012": 33,
+    "2007": 29,
+    "2013": 30
+  },
+  "updated_utc": "2026-11-14T08:40:54.044496+00:00",
+  "caution": "Do not treat the combined total as a single-year statistic. Dates differ and grants may flow between charities; recipients are not listed."
+}
