@@ -52,7 +52,7 @@ const cwGrantSampleStats=rows=>{
  for(const row of rows){
   const g=row?.data;
   if(!g||typeof g!=='object')continue;
-  if(typeof g.awardDate==='string'&&/^\\d{4}-\\d{2}-\\d{2}$/.test(g.awardDate)){
+  if(typeof g.awardDate==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(g.awardDate)){
    const date=new Date(g.awardDate+'T00:00:00Z');
    if(Number.isFinite(date.valueOf())&&date.toISOString().slice(0,10)===g.awardDate)years.add(g.awardDate.slice(0,4));
   }
