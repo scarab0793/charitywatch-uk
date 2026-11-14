@@ -25,9 +25,21 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/grant-makers-ew.json data/grant-makers-meta-ew.json
-          if ! git diff --cached --quiet; then
+          set -e
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git reset --mixed origin/main
+            git add -A -- data/grant-makers-ew.json data/grant-makers-meta-ew.json
+            if git diff --cached --quiet; then
+              echo "Grant totals unchanged"
+              exit 0
+            fi
             git commit -m "Publish sourced grant-making totals"
-            git pull --rebase origin main
-            git push origin HEAD:main
-          fi
+            if git push origin HEAD:main; then
+              echo "Verified grant totals published"
+              exit 0
+            fi
+            echo "Remote main advanced; retrying publication ($attempt/3)"
+          done
+          echo "Could not publish grant totals after 3 attempts" >&2
+          exit 1
