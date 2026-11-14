@@ -91,8 +91,6 @@ for org in ORG_IDS:
         if error:
             print(f"Could not update {org}/{direction}: {error}")
             summary["organisations"][f"{org}:{direction}"] = {"error": error, "updated": False}
-            if "HTTP Error 404" in error:
-                UNAVAILABLE.add(org)
             continue
         data = {
             "organisation_id": org, "direction": direction,
@@ -125,8 +123,6 @@ for org in ORG_IDS:
         for old_page in OUT.glob(f"{org}-{direction}-p*.json"):
             if old_page.name not in page_names:
                 old_page.unlink()
-        # Remove from the unavailable history when a previous 404 source recovers.
-        UNAVAILABLE.discard(org)
         summary["organisations"][f"{org}:{direction}"] = {
             "records_cached": len(all_rows), "reported_count": reported_total,
             "skipped_invalid": skipped_invalid, "skipped_duplicates": skipped_duplicates,
@@ -136,6 +132,12 @@ for org in ORG_IDS:
         time.sleep(1.2)
 
 successes = sum(bool(item.get("updated")) for item in summary["organisations"].values())
+for org in ORG_IDS:
+    results = [summary["organisations"][f"{org}:{direction}"] for direction in DIRECTIONS]
+    if any("HTTP Error 404" in str(result.get("error", "")) for result in results):
+        UNAVAILABLE.add(org)
+    elif all(result.get("updated") is True for result in results):
+        UNAVAILABLE.discard(org)
 summary["unavailable_organisations"] = sorted(UNAVAILABLE)
 summary["updated_directions"] = successes
 summary["status"] = "ok" if successes == len(summary["organisations"]) else ("partial" if successes else "unavailable")
