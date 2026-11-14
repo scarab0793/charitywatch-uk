@@ -35,7 +35,7 @@ const model={income:120000,expenditure:70000,year:'2025-03-31',
   {year:'2025-03-31',income:120000,expenditure:70000}
 ]};
 const format=v=>String(v);
-const context={Intl,Map,Set,Math,Number,String,Array,Date,
+const context={Intl,Map,Set,Math,Number,String,Array,Date,URL,
  escapeHTML:format, money:v=>'£'+v, console};
 vm.createContext(context);
 const test=`
@@ -61,6 +61,7 @@ const result=cwGrantCard({data:{recipientOrganization:[{name:'Sample Recipient',
 if(!result.includes('Sample Recipient')||!result.includes('£1,000')||!result.includes('Grant identifier'))throw Error('Grant attribution failed');
 if(result.includes('money paid'))throw Error('Award incorrectly represented as paid amount');
 if(!result.includes('Funder')||!result.includes('Recipient')||!result.includes('#charity/ew/123456'))throw Error('Relationship display or recipient registration link missing');
+if(!result.includes('Publisher-provided data')||!result.includes('https://example.org/data.csv'))throw Error('Primary source link missing in published grant card');
 const panel=cwGrantControls('ew','802052',{period_end:'2025-06-30',expenditure_grants_institution:240000});
 if(!panel.includes('£240,000')||!panel.includes('Part B')||!panel.includes('Not queried'))throw Error('Part B grant comparison missing');
 `;
