@@ -74,6 +74,8 @@ jobs:
         id: schema
         run: |
           python scripts/check_ccew_archives.py --charity /tmp/charities.zip --history /tmp/history.zip --part-a /tmp/parta.zip --part-b /tmp/partb.zip
+      - name: Preserve previous verified coverage
+        run: cp data/manifest-ew.json /tmp/charitywatch-previous-manifest.json
       - name: Import and validate
         id: directory
         run: |
@@ -149,6 +151,7 @@ jobs:
           python scripts/verify_salary_shards.py
           python scripts/verify_published_data.py
           python scripts/verify_search_indexes.py
+          python scripts/verify_refresh_regression.py --before /tmp/charitywatch-previous-manifest.json --after data/manifest-ew.json
       - name: Commit verified directory
         id: publish
         run: |
