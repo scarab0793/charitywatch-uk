@@ -13,7 +13,7 @@ assert.equal(inline.length,1,'Expected one inline application script');
 new vm.Script(charts,{filename:'assets/charts.js'});
 new vm.Script(inline[0],{filename:'index.html:inline'});
 for(const id of ['searchForm','q','region','results','suggestions','charityProfile',
-  'profileBody','comparison','verifiedPayList','dataStatus','ceoPaySearch','ceoPaySort']){
+  'profileBody','comparison','verifiedPayList','dataStatus','ceoPaySearch','ceoPaySort','grantsExplorer','grantFilter','grantYear','grantOrder','grantResults','grantNext']){
  assert.ok(html.includes('id="'+id+'"'),'Missing UI element: '+id);
 }
 assert.ok(html.includes('assets/charts.js'),'Charts script not loaded');
@@ -21,6 +21,8 @@ assert.ok(html.includes('await Promise.all(rows.map(x=>attachSalaryData(x,search
  'Search result cards must load official salary shards');
 assert.ok(html.includes('salarySnippet(x)'),'Search result cards must show salary bands');
 assert.ok(html.includes('cwComparisonChart(arr,comparisonMetric)'),'Comparison charts unavailable');
+assert.ok(html.includes('String(r.period_end).slice(0,4)===year'),'Grant year filter must respect source reporting dates');
+assert.ok(html.includes('Recipient organisations are not identified'),'Grant UI must not imply named recipients');
 
 const model={income:120000,expenditure:70000,year:'2025-03-31',
  name:'Example charity',history:[
