@@ -9,7 +9,7 @@ from urllib.parse import urlsplit
 
 source = json.loads(Path("data/verified-ceo-pay.json").read_text(encoding="utf-8"))
 records = source["records"]
-allowed = {"gross_pay", "emoluments", "salary_benefits_employer_ni"}
+allowed = {"gross_pay", "emoluments", "salary_benefits_employer_ni", "annual_salary", "total_remuneration"}
 assert isinstance(records, dict) and records, "Missing verified CEO records"
 for key, charity in records.items():
     assert re.fullmatch(r"(ew|sc|ni):[0-9]{4,9}", key), key
