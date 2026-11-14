@@ -8,7 +8,7 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: official-ccew-import
+  group: charitywatch-data-writes
   cancel-in-progress: false
 jobs:
   import:
@@ -54,5 +54,6 @@ jobs:
           git add data/ew data/manifest-ew.json
           if ! git diff --cached --quiet; then
             git commit -m "Publish verified CCEW expenditure and reserves"
-            git push
+            git pull --rebase origin main
+            git push origin HEAD:main
           fi
