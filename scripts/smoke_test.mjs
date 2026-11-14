@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 
 const html=fs.readFileSync('index.html','utf8');
 const charts=fs.readFileSync('assets/charts.js','utf8');
-const inline=[...html.matchAll(/<script(?:\\s[^>]*)?>([\\s\\S]*?)<\\/script>/gi)]
+const inline=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)]
   .map(m=>m[1]).filter(Boolean);
 assert.equal(inline.length,1,'Expected one inline application script');
 new vm.Script(charts,{filename:'assets/charts.js'});
