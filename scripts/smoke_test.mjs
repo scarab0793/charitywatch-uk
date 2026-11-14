@@ -65,6 +65,13 @@ if(!result.includes('Sample Recipient')||!result.includes('£1,000')||!result.in
 if(result.includes('money paid'))throw Error('Award incorrectly represented as paid amount');
 if(!result.includes('Funder')||!result.includes('Recipient')||!result.includes('#charity/ew/123456'))throw Error('Relationship display or recipient registration link missing');
 if(!result.includes('Publisher-provided data')||!result.includes('https://example.org/data.csv'))throw Error('Primary source link missing in published grant card');
+const sampleStats=cwGrantSampleStats([
+ {data:{amountAwarded:100,currency:'GBP',awardDate:'2024-05-01'}},
+ {data:{amountAwarded:150,currency:'GBP',awardDate:'2025-01-03'}},
+ {data:{amountAwarded:50,currency:'EUR',awardDate:'2025-04-02'}},
+ {data:{amountAwarded:-3,currency:'GBP',awardDate:'invalid-date'}}
+]);
+if(sampleStats.amount!==250||sampleStats.valued!==2||sampleStats.excluded!==2||sampleStats.years.join(',')!=='2024,2025')throw Error('GBP award sample accounting misstates coverage');
 const panel=cwGrantControls('ew','802052',{period_end:'2025-06-30',expenditure_grants_institution:240000});
 if(!panel.includes('£240,000')||!panel.includes('Part B')||!panel.includes('Not queried'))throw Error('Part B grant comparison missing');
 `;
