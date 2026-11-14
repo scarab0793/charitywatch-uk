@@ -57,6 +57,7 @@ const getComparisonCSV=()=>{
  const a=document.createElement('a');a.href=url;a.download='charitywatch-comparison.csv';
  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 };
+let comparisonMetric='income';
 const renderComparison=()=>{
  const el=$('comparison');if(!el)return;
  const {arr,data}=comparisonRows();
@@ -71,6 +72,8 @@ const renderComparison=()=>{
  const payDefs=new Set(data.filter(v=>v.latest).map(v=>v.ceo?.measure||'unspecified'));
  const warning=(incomeYear.size>1?'Charity financial periods differ. ':'')+(payDefs.size>1?'CEO remuneration definitions differ (gross pay vs emoluments and benefits). ':'');
  let html='<div class="comparison-actions"><span class="small muted">'+arr.length+' of 3 selected</span><button type="button" id="exportComparison">Export comparison CSV</button><button type="button" id="clearComparison">Clear comparison</button></div>';
+ html+='<div class="comparison-actions"><label for="comparisonMetric">Financial chart:</label><select id="comparisonMetric" aria-label="Choose comparison chart metric"><option value="income"'+(comparisonMetric==='income'?' selected':'')+'>Gross income</option><option value="expenditure"'+(comparisonMetric==='expenditure'?' selected':'')+'>Gross expenditure</option></select></div>';
+ html+=cwComparisonChart(arr,comparisonMetric);
  html+='<div class="comparison-scroll"><table class="comparison-table"><thead><tr><th scope="col">Financial metric</th>'+data.map(v=>'<th scope="col"><b>'+escapeHTML(v.x.name)+'</b><span class="small muted">'+escapeHTML(v.x.number)+'</span><button type="button" data-remove="'+escapeHTML(v.x.number)+'">Remove</button></th>').join('')+'</tr></thead><tbody>';
  html+=comparisonDefinition.map(([label,fn])=>row(label,fn)).join('');
  html+='<tr><th scope="row">CEO primary evidence</th>'+data.map(v=>'<td>'+(v.latest?'<a href="'+escapeHTML(v.latest.source_url)+'" target="_blank" rel="noopener">Annual accounts</a>':'Not independently verified')+'</td>').join('')+'</tr>';
@@ -521,6 +524,7 @@ $('searchForm').addEventListener('submit',async e=>{
  }
 });
 $('results').addEventListener('click',async e=>{if(e.target.closest('#moreResults')){renderNextPage();return;}const profile=e.target.closest('button[data-profile]');if(profile){showCharity(profile.dataset.region,profile.dataset.profile);return;}const b=e.target.closest('button[data-add]');if(!b)return;const x=(window.currentMatches||[]).find(v=>v.number===b.dataset.add);if(!x)return;if(!selected.has(x.number)&&selected.size>=3){alert('Compare up to three charities. Remove one first.');return;}selected.set(x.number,x);renderComparison();try{const region=(x.jurisdiction||searchRegion||'ew').toLowerCase();const manifest=await loadJson('data/manifest-'+region+'.json');await Promise.all([attachSalaryData(x,region,manifest),getVerifiedPayIndex()]);if(selected.has(x.number))renderComparison();}catch(_){if(selected.has(x.number))renderComparison();}});
+$('comparison').addEventListener('change',e=>{if(e.target.id==='comparisonMetric'){comparisonMetric=e.target.value;renderComparison();}});
 $('comparison').addEventListener('click',e=>{const b=e.target.closest('button[data-remove]');if(b){selected.delete(b.dataset.remove);renderComparison();return;}if(e.target.closest('#clearComparison')){selected.clear();renderComparison();return;}if(e.target.closest('#exportComparison'))getComparisonCSV();});
 $('closeProfile').addEventListener('click',()=>{
  $('charityProfile').hidden=true;
