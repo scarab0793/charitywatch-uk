@@ -1,0 +1,29 @@
+name: Verify 360Giving live API contract
+on:
+  push:
+    paths:
+      - 'scripts/check_360giving_api.py'
+      - '.github/workflows/check-360giving-api.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check response structure and CORS in official API
+        run: python scripts/check_360giving_api.py
+      - name: Persist diagnostic evidence
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/diagnostics/360giving-api.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Record 360Giving API compatibility diagnostic"
+            git push
+          fi
