@@ -24,6 +24,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Validate official source URL
+        id: source
         env:
           ARCHIVE_URL: ${{ inputs.archive_url || 'https://ccewuksprdoneregsadata1.blob.core.windows.net/data/txt/publicextract.charity.zip' }}
         run: |
@@ -36,6 +37,7 @@ jobs:
           print("Approved official source host:",u.hostname)
           PY
       - name: Download official archive
+        id: download_main
         env:
           ARCHIVE_URL: ${{ inputs.archive_url || 'https://ccewuksprdoneregsadata1.blob.core.windows.net/data/txt/publicextract.charity.zip' }}
         run: |
@@ -45,6 +47,7 @@ jobs:
           assert zipfile.is_zipfile("/tmp/charities.zip"),"URL did not return a ZIP archive"
           PY
       - name: Download annual return history
+        id: download_history
         run: |
           curl --fail --location --retry 3 --max-time 600 --max-filesize 500000000 'https://ccewuksprdoneregsadata1.blob.core.windows.net/data/txt/publicextract.charity_annual_return_history.zip' -o /tmp/history.zip
           python - <<'PY'
@@ -52,6 +55,7 @@ jobs:
           assert zipfile.is_zipfile('/tmp/history.zip'), 'Invalid annual history ZIP'
           PY
       - name: Download official detailed annual return Part A
+        id: download_a
         run: |
           curl --fail --location --retry 3 --max-time 600 --max-filesize 500000000 'https://ccewuksprdoneregsadata1.blob.core.windows.net/data/txt/publicextract.charity_annual_return_parta.zip' -o /tmp/parta.zip
           python - <<'PY'
@@ -59,6 +63,7 @@ jobs:
           assert zipfile.is_zipfile('/tmp/parta.zip'), 'Invalid detailed annual return ZIP'
           PY
       - name: Download official detailed annual return Part B
+        id: download_b
         run: |
           curl --fail --location --retry 3 --max-time 600 --max-filesize 500000000 'https://ccewuksprdoneregsadata1.blob.core.windows.net/data/txt/publicextract.charity_annual_return_partb.zip' -o /tmp/partb.zip
           python - <<'PY'
@@ -66,6 +71,7 @@ jobs:
           assert zipfile.is_zipfile('/tmp/partb.zip'), 'Invalid detailed Part B annual return ZIP'
           PY
       - name: Import and validate
+        id: directory
         run: |
           python scripts/import_ccew.py --zip /tmp/charities.zip --output data
           python - <<'PY'
@@ -77,6 +83,7 @@ jobs:
           print("Verified official charity count:",m["count"])
           PY
       - name: Join annual returns and validate coverage
+        id: finances
         run: |
           python scripts/enrich_ccew_finances.py --charity-zip /tmp/charities.zip --history-zip /tmp/history.zip --output data
           python - <<'PY'
@@ -88,6 +95,7 @@ jobs:
           print('Verified financial coverage:',m['financial_records'], '/',m['count'])
           PY
       - name: Join government funding and salary band records
+        id: salary
         run: |
           python scripts/build_salary_shards.py --zip /tmp/parta.zip --output data
           python - <<'PY'
@@ -98,6 +106,7 @@ jobs:
           print('Verified detailed return records:', m['annual_return_part_a_records'])
           PY
       - name: Join official expenditure categories and reserves
+        id: spending
         run: |
           python scripts/enrich_ccew_part_b.py --zip /tmp/partb.zip --output data
           python - <<'PY'
@@ -108,6 +117,7 @@ jobs:
           print('Verified detailed expenditure records:',m['annual_return_part_b_records'])
           PY
       - name: Generate institutional grant-making totals
+        id: grants
         run: |
           python scripts/build_grant_makers.py
           python - <<'PY'
@@ -118,6 +128,7 @@ jobs:
           print('Verified grant-making charities:',d['record_count'])
           PY
       - name: Build indexed name-word search
+        id: index
         run: |
           python scripts/build_word_index.py --data data --region ew
           python - <<'PY'
@@ -129,10 +140,12 @@ jobs:
           print('Word index records:',m['word_index_records'])
           PY
       - name: Validate final published data consistency
+        id: validation
         run: |
           python scripts/verify_salary_shards.py
           python scripts/verify_published_data.py
       - name: Commit verified directory
+        id: publish
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -142,6 +155,49 @@ jobs:
             git pull --rebase origin main
             git push origin HEAD:main
           fi
+      - name: Summarise failed import step
+        if: failure()
+        env:
+          SOURCE_RESULT: ${{ steps.source.outcome }}
+          MAIN_RESULT: ${{ steps.download_main.outcome }}
+          HISTORY_RESULT: ${{ steps.download_history.outcome }}
+          PARTA_DOWNLOAD: ${{ steps.download_a.outcome }}
+          PARTB_DOWNLOAD: ${{ steps.download_b.outcome }}
+          DIRECTORY_RESULT: ${{ steps.directory.outcome }}
+          FINANCES_RESULT: ${{ steps.finances.outcome }}
+          SALARY_RESULT: ${{ steps.salary.outcome }}
+          SPENDING_RESULT: ${{ steps.spending.outcome }}
+          GRANTS_RESULT: ${{ steps.grants.outcome }}
+          INDEX_RESULT: ${{ steps.index.outcome }}
+          VALIDATION_RESULT: ${{ steps.validation.outcome }}
+          PUBLISH_RESULT: ${{ steps.publish.outcome }}
+        run: |
+          python - <<'PY'
+          import os
+          steps = [
+              ("Official source URL", "SOURCE_RESULT"),
+              ("Download charity register", "MAIN_RESULT"),
+              ("Download annual returns", "HISTORY_RESULT"),
+              ("Download Part A", "PARTA_DOWNLOAD"),
+              ("Download Part B", "PARTB_DOWNLOAD"),
+              ("Import directory", "DIRECTORY_RESULT"),
+              ("Join finances", "FINANCES_RESULT"),
+              ("Join salaries", "SALARY_RESULT"),
+              ("Join spending", "SPENDING_RESULT"),
+              ("Generate grant totals", "GRANTS_RESULT"),
+              ("Build search index", "INDEX_RESULT"),
+              ("Validate published data", "VALIDATION_RESULT"),
+              ("Commit and publish", "PUBLISH_RESULT"),
+          ]
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as out:
+              out.write("## CharityWatch official data import failed\\n\\n")
+              out.write("| Step | Result |\\n|---|---|\\n")
+              for label, key in steps:
+                  result = os.environ.get(key, "unknown")
+                  out.write(f"| {label} | {result} |\\n")
+              out.write("\\nPreviously published data remains unchanged unless the publication step succeeded.\\n")
+          print("Failed steps:", [(label, os.environ.get(key)) for label, key in steps if os.environ.get(key) == "failure"])
+          PY
       - name: Upload import failure diagnostics
         if: failure()
         uses: actions/upload-artifact@v4
