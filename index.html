@@ -266,7 +266,11 @@ const independentlyVerifiedPay=async record=>{
   const entry=source.records?.[region+':'+record.number];
   if(!entry?.periods?.length)return '<p class="small muted">No individually verified chief executive pay figure has been added to our source library for this charity yet. This does not mean the information is unpublished.</p>';
   const years=[...entry.periods].sort((a,b)=>String(b.period_end).localeCompare(String(a.period_end)));
-  return verifiedCEOAnalysis(record,entry)+cwCEOChart(entry)+'<div class="profile-scroll"><table class="profile-table"><thead><tr><th>Financial period end</th><th>Reported remuneration</th><th>Source</th></tr></thead><tbody>'+years.map(y=>'<tr><td>'+escapeHTML(y.period_end)+'</td><td>'+money(y.amount)+'</td><td><a href="'+escapeHTML(y.source_url)+'" target="_blank" rel="noopener">Annual report</a></td></tr>').join('')+'</tbody></table></div><p class="small muted">'+escapeHTML(entry.measure||'Chief Executive remuneration')+'. '+escapeHTML(entry.caution||'Amounts as reported in accounts; definitions may vary.')+'</p>';
+  const latest=years[0];
+  const componentLabels={salary:'Salary paid',employer_ni:'Employer National Insurance',employer_pension:'Employer pension contributions',other_benefits:'Other benefits'};
+  const componentKeys=Object.keys(componentLabels).filter(k=>Number.isFinite(latest[k]));
+  const payBreakdown=componentKeys.length?'<h4>Latest employment package breakdown</h4><div class="profile-metrics">'+componentKeys.map(k=>profileMetric(componentLabels[k],money(latest[k]))).join('')+'</div><p class="small muted">These items sum to the reported aggregate employment benefits. They are not all salary or take-home pay.</p>':'';
+  return verifiedCEOAnalysis(record,entry)+payBreakdown+cwCEOChart(entry)+'<div class="profile-scroll"><table class="profile-table"><thead><tr><th>Financial period end</th><th>Reported remuneration</th><th>Source</th></tr></thead><tbody>'+years.map(y=>'<tr><td>'+escapeHTML(y.period_end)+'</td><td>'+money(y.amount)+'</td><td><a href="'+escapeHTML(y.source_url)+'" target="_blank" rel="noopener">Annual report</a></td></tr>').join('')+'</tbody></table></div><p class="small muted">'+escapeHTML(entry.measure||'Chief Executive remuneration')+'. '+escapeHTML(entry.caution||'Amounts as reported in accounts; definitions may vary.')+'</p>';
  }catch(_){return '<p class="muted">Independently verified salary records are currently unavailable.</p>';}
 };
 const salaryReport=record=>{
