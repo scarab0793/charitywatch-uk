@@ -88,7 +88,8 @@ const cwGrantBinder=(region,number)=>{
    if(!Array.isArray(payload.results)||payload.direction!==nextDirection||payload.organisation_id!=='GB-CHC-'+number)throw Error('Unexpected snapshot identity or format');
    if(!Number.isInteger(payload.records_cached)||payload.records_cached!==payload.results.length)throw Error('Snapshot record count mismatch');
    if(payload.reported_count!==null&&(!Number.isInteger(payload.reported_count)||payload.reported_count<payload.results.length))throw Error('Invalid reported award count');
-   if(typeof payload.partial!=='boolean'||payload.partial!==(payload.reported_count===null||payload.results.length<payload.reported_count))throw Error('Invalid partial snapshot status');
+   const excluded=(Number.isInteger(payload.skipped_invalid)&&payload.skipped_invalid>0)||(Number.isInteger(payload.skipped_duplicates)&&payload.skipped_duplicates>0);
+   if(typeof payload.partial!=='boolean'||payload.partial!==(payload.reported_count===null||payload.results.length<payload.reported_count||excluded))throw Error('Invalid partial snapshot status');
    cached=payload.results;reportedTotal=payload.reported_count;partialSnapshot=payload.partial;
    summary.textContent=reportedTotal!==null?reportedTotal.toLocaleString('en-GB')+' published '+(direction==='made'?'outgoing':'incoming')+' awards':'Published awards; total unknown';
    note.textContent='Up to '+cached.length+' source records cached from 360Giving. Award figures are not confirmed payments. Cache date: '+(payload.retrieved_utc||'not available')+'. Original Part B financial periods may differ.';
