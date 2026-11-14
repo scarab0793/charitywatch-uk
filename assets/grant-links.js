@@ -58,7 +58,7 @@ const cwGrantControls=(region,number,partB)=>{
 const cwGrantBinder=(region,number)=>{
  const box=document.getElementById('grant-awards');
  if(!box)return;
- let direction=null,cached=[],offset=0,reportedTotal=null,requestVersion=0;
+ let direction=null,cached=[],offset=0,reportedTotal=null,partialSnapshot=true,requestVersion=0;
  const status=document.getElementById('grantAwardStatus');
  const rows=document.getElementById('grantAwardRows');
  const more=document.getElementById('grantAwardsMore');
@@ -69,12 +69,12 @@ const cwGrantBinder=(region,number)=>{
   rows.insertAdjacentHTML('beforeend',visible.map(r=>cwGrantCard(r,direction,cwGrantEndpoint(region,number,direction))).join(''));
   offset+=visible.length;
   const total=reportedTotal!==null?reportedTotal.toLocaleString('en-GB')+' published awards':'Published awards';
-  status.textContent=total+' · '+offset.toLocaleString('en-GB')+' of '+cached.length.toLocaleString('en-GB')+' locally cached records displayed. This is a partial sample, not the full grant history.';
+  status.textContent=total+' · '+offset.toLocaleString('en-GB')+' of '+cached.length.toLocaleString('en-GB')+' locally cached records displayed. '+(partialSnapshot?'This is a partial snapshot; more awards may exist.':'All records in this published snapshot are displayed.');
   more.hidden=offset>=cached.length;
  };
  const open=async(nextDirection)=>{
   const currentRequest=++requestVersion;
-  direction=nextDirection;offset=0;cached=[];reportedTotal=null;rows.innerHTML='';
+  direction=nextDirection;offset=0;cached=[];reportedTotal=null;partialSnapshot=true;rows.innerHTML='';
   more.hidden=true;
   status.textContent='Loading published award snapshot…';
   summary.textContent='Loading…';
@@ -85,12 +85,15 @@ const cwGrantBinder=(region,number)=>{
    if(!response.ok)throw Error('Snapshot not yet available');
    const payload=await response.json();
    if(currentRequest!==requestVersion)return;
-   if(!Array.isArray(payload.results)||payload.direction!==nextDirection)throw Error('Unexpected snapshot format');
-   cached=payload.results;reportedTotal=Number.isInteger(payload.reported_count)?payload.reported_count:null;
+   if(!Array.isArray(payload.results)||payload.direction!==nextDirection||payload.organisation_id!=='GB-CHC-'+number)throw Error('Unexpected snapshot identity or format');
+   if(!Number.isInteger(payload.records_cached)||payload.records_cached!==payload.results.length)throw Error('Snapshot record count mismatch');
+   if(payload.reported_count!==null&&(!Number.isInteger(payload.reported_count)||payload.reported_count<payload.results.length))throw Error('Invalid reported award count');
+   if(typeof payload.partial!=='boolean'||payload.partial!==(payload.reported_count===null||payload.results.length<payload.reported_count))throw Error('Invalid partial snapshot status');
+   cached=payload.results;reportedTotal=payload.reported_count;partialSnapshot=payload.partial;
    summary.textContent=reportedTotal!==null?reportedTotal.toLocaleString('en-GB')+' published '+(direction==='made'?'outgoing':'incoming')+' awards':'Published awards; total unknown';
    note.textContent='Up to '+cached.length+' source records cached from 360Giving. Award figures are not confirmed payments. Cache date: '+(payload.retrieved_utc||'not available')+'. Original Part B financial periods may differ.';
    if(!cached.length){
-    status.textContent='No published grants found in this snapshot; coverage may be incomplete.';
+    status.textContent=reportedTotal===0?'The current 360Giving snapshot reports zero published awards in this direction. This does not prove that no grants were made.':'No award records were cached for this direction; published coverage is incomplete.';
     return;
    }
    renderMore();
