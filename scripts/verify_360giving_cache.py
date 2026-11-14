@@ -25,13 +25,15 @@ def validate(root):
         limit = 40
     selected = manifest.get("selected_organisations")
     if selected is not None:
-        if not isinstance(selected, list) or not 1 <= len(selected) <= 12 or len(selected) != len(set(selected)):
+        if (not isinstance(selected, list) or not 1 <= len(selected) <= 12 or
+                any(not isinstance(org, str) or not re.fullmatch(r"GB-CHC-[0-9]{4,9}", org) for org in selected) or
+                len(selected) != len(set(selected))):
             errors.append("Invalid selected organisation list")
         elif set(entries) != {org + ":" + direction for org in selected for direction in ("made", "received")}:
             errors.append("Manifest direction keys do not match selected organisations")
     successes = 0
     for key, detail in entries.items():
-        match = re.fullmatch(r"(GB-CHC-[0-9]{4,9}):(made|received)", key)
+        match = re.fullmatch(r"(GB-CHC-[0-9]{4,9}):(made|received)", key) if isinstance(key, str) else None
         if not match or not isinstance(detail, dict):
             errors.append("Malformed organisation-direction entry: " + str(key))
             continue
