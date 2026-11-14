@@ -70,6 +70,10 @@ jobs:
           import zipfile
           assert zipfile.is_zipfile('/tmp/partb.zip'), 'Invalid detailed Part B annual return ZIP'
           PY
+      - name: Check official extract schemas before expensive imports
+        id: schema
+        run: |
+          python scripts/check_ccew_archives.py --charity /tmp/charities.zip --history /tmp/history.zip --part-a /tmp/parta.zip --part-b /tmp/partb.zip
       - name: Import and validate
         id: directory
         run: |
@@ -163,6 +167,7 @@ jobs:
           HISTORY_RESULT: ${{ steps.download_history.outcome }}
           PARTA_DOWNLOAD: ${{ steps.download_a.outcome }}
           PARTB_DOWNLOAD: ${{ steps.download_b.outcome }}
+          SCHEMA_RESULT: ${{ steps.schema.outcome }}
           DIRECTORY_RESULT: ${{ steps.directory.outcome }}
           FINANCES_RESULT: ${{ steps.finances.outcome }}
           SALARY_RESULT: ${{ steps.salary.outcome }}
@@ -180,6 +185,7 @@ jobs:
               ("Download annual returns", "HISTORY_RESULT"),
               ("Download Part A", "PARTA_DOWNLOAD"),
               ("Download Part B", "PARTB_DOWNLOAD"),
+              ("Validate source archive schemas", "SCHEMA_RESULT"),
               ("Import directory", "DIRECTORY_RESULT"),
               ("Join finances", "FINANCES_RESULT"),
               ("Join salaries", "SALARY_RESULT"),
