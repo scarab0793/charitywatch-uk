@@ -47,13 +47,29 @@ jobs:
           assert m['annual_return_part_b_aligned_periods'] > 1000, 'Too few same-period matches'
           print('Data integrity checks passed.')
           PY
+      - name: Rebuild linked grant totals and verify published metadata
+        run: |
+          python scripts/build_grant_makers.py
+          python scripts/verify_published_data.py
       - name: Commit validated records
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/ew data/manifest-ew.json
-          if ! git diff --cached --quiet; then
-            git commit -m "Publish verified CCEW expenditure and reserves"
-            git pull --rebase origin main
-            git push origin HEAD:main
-          fi
+          set -e
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git reset --mixed origin/main
+            git add -A -- data/ew data/manifest-ew.json data/grant-makers-ew.json data/grant-makers-meta-ew.json
+            if git diff --cached --quiet; then
+              echo "No Part B data changes to publish"
+              exit 0
+            fi
+            git commit -m "Publish verified CCEW expenditure, reserves and linked grants"
+            if git push origin HEAD:main; then
+              echo "Validated Part B data and grant totals published"
+              exit 0
+            fi
+            echo "Remote main advanced; retrying publication ($attempt/3)"
+          done
+          echo "Could not publish validated Part B data after 3 attempts" >&2
+          exit 1
