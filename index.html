@@ -110,6 +110,7 @@ const financialAnalysis=(record,periods)=>{
 const moneyUseBreakdown=record=>{
  const p=record.annual_return_part_a;
  const b=record.annual_return_part_b;
+ const hasGovernmentData=Boolean(p&&[p.income_from_government_grants,p.income_from_government_contracts].some(v=>typeof v==='number')||p&&[p.charity_receives_govt_funding_grants,p.charity_receives_govt_funding_contracts].some(v=>typeof v==='boolean'));
  const income=financeNumber(record.income);
  const costs=financeNumber(record.expenditure);
  const hasGrant=financeNumber(p?.income_from_government_grants);
@@ -120,10 +121,10 @@ const moneyUseBreakdown=record=>{
  const share=value=>value===null?'Not calculable':percent(value);
  const fact=(label,value,description)=>'<div class="metric"><div class="small muted">'+escapeHTML(label)+'</div><div class="value">'+escapeHTML(value)+'</div><p class="small muted">'+escapeHTML(description)+'</p></div>';
  let funding='<h3>Where the money comes from</h3>';
- if(p){
+ if(hasGovernmentData){
   funding+='<div class="profile-metrics">'+fact('Government grant income',money(hasGrant),'Reported incoming government grants')+fact('Government contract income',money(hasContract),'Reported income from government contracts')+fact('Government grants / total income',share(grantShare),'Only comparable when reporting periods match')+fact('Government contracts / total income',share(contractShare),'Only comparable when reporting periods match')+'</div>';
   if(!aligned)funding+='<p class="profile-warning">The Part A and headline financial periods differ or are unknown. Funding percentages have been withheld.</p>';
- }else funding+='<p class="muted">No verified Part A government funding figures currently linked to this charity.</p>';
+ }else funding+='<p class="muted">Government funding amounts have not been imported for this charity. Employee salary-band disclosures are a different dataset.</p>';
  let expenditure='<h3>Where the money goes</h3>';
  if(b){
   const total=financeNumber(b.expenditure_total);
@@ -239,7 +240,7 @@ const renderProfile=record=>{
  const rows=history.map(v=>'<tr><td>'+dateLabel(v.year)+'</td><td>'+money(v.income)+'</td><td>'+money(v.expenditure)+'</td><td>'+(typeof v.income==='number'&&typeof v.expenditure==='number'?money(v.income-v.expenditure):'Not reported')+'</td></tr>').join('');
  const historyHTML=rows?'<div class="profile-scroll"><table class="profile-table"><thead><tr><th>Period end</th><th>Gross income</th><th>Gross expenditure</th><th>Difference</th></tr></thead><tbody>'+rows+'</tbody></table></div>':'<p class="muted">No verified historical financial values are available.</p>';
  const p=record.annual_return_part_a;
- const funding=p?'<div class="profile-metrics">'+profileMetric('Government grant income',money(p.income_from_government_grants))+profileMetric('Government contract income',money(p.income_from_government_contracts))+profileMetric('Number of government grants',p.count_govt_grants??'Not reported')+profileMetric('Number of government contracts',p.count_govt_contracts??'Not reported')+profileMetric('Trustee benefits declared',profileFlag(p.does_trustee_receive_any_benefit))+profileMetric('Volunteers',p.count_volunteers??'Not reported')+'</div><p class="small muted">Detailed annual return period ending '+dateLabel(p.period_end)+'. These government funding amounts are income received, not grants awarded.</p>':'<p class="muted">Detailed annual return Part A has not been linked to this record.</p>';
+ const funding=p&&[p.income_from_government_grants,p.income_from_government_contracts].some(v=>typeof v==='number')?'<div class="profile-metrics">'+profileMetric('Government grant income',money(p.income_from_government_grants))+profileMetric('Government contract income',money(p.income_from_government_contracts))+profileMetric('Number of government grants',p.count_govt_grants??'Not reported')+profileMetric('Number of government contracts',p.count_govt_contracts??'Not reported')+profileMetric('Trustee benefits declared',profileFlag(p.does_trustee_receive_any_benefit))+profileMetric('Volunteers',p.count_volunteers??'Not reported')+'</div><p class="small muted">Detailed annual return period ending '+dateLabel(p.period_end)+'. These government funding amounts are income received, not grants awarded.</p>':'<p class="muted">Government funding figures are not available for this record; salary bands are shown separately when reported.</p>';
  const regulator=links[region]||links.ew;
  const siteUrl=new URL(location.href);siteUrl.hash='charity/'+encodeURIComponent(region)+'/'+encodeURIComponent(record.number);
  $('profileTitle').textContent=record.name;
