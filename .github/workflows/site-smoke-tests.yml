@@ -89,6 +89,32 @@ jobs:
             exit 1
           fi
           echo 'PASS: browser loaded live local app data and verified profile, salary bands and search'
+      - name: Publish verification summary
+        if: success()
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          manifest = json.loads(Path('data/manifest-ew.json').read_text(encoding='utf-8'))
+          grants = json.loads(Path('data/grant-makers-meta-ew.json').read_text(encoding='utf-8'))
+          fields = [
+              ('Registered charities', manifest['count']),
+              ('Charities with financial histories', manifest['financial_records']),
+              ('Part A salary disclosure records', manifest['annual_return_part_a_records']),
+              ('Part B expenditure records', manifest['annual_return_part_b_records']),
+              ('Name word-index records', manifest['word_index_records']),
+              ('Institutional grant-making organisations', grants['record_count']),
+          ]
+          summary = Path(os.environ['GITHUB_STEP_SUMMARY'])
+          with summary.open('a', encoding='utf-8') as out:
+              out.write('## CharityWatch tests passed\n\n')
+              out.write('Verified: JavaScript, browser profile/search, salary disclosures, search indexes, data consistency, and import fixtures.\n\n')
+              out.write('| Published dataset | Records |\n|---|---:|\n')
+              for name, value in fields:
+                  out.write(f'| {name} | {value:,} |\n')
+              out.write('\nThese are published data counts, not counts of charities independently audited by this workflow.\n')
+          PY
       - name: Upload browser diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v4
