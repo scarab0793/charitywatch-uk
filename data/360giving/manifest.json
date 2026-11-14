@@ -1,0 +1,39 @@
+{
+  "updated_utc": "2026-11-14T08:45:06.003731+00:00",
+  "source": "360Giving official API; published awards, not confirmed payments",
+  "max_records_per_org_direction": 40,
+  "organisations": {
+    "GB-CHC-802052:made": {
+      "records_cached": 40,
+      "reported_count": 9551,
+      "updated": true
+    },
+    "GB-CHC-802052:received": {
+      "records_cached": 15,
+      "reported_count": 15,
+      "updated": true
+    },
+    "GB-CHC-202918:made": {
+      "records_cached": 0,
+      "reported_count": 0,
+      "updated": true
+    },
+    "GB-CHC-202918:received": {
+      "records_cached": 40,
+      "reported_count": 47,
+      "updated": true
+    },
+    "GB-CHC-288701:made": {
+      "records_cached": 0,
+      "reported_count": 0,
+      "updated": true
+    },
+    "GB-CHC-288701:received": {
+      "records_cached": 40,
+      "reported_count": 61,
+      "updated": true
+    }
+  },
+  "updated_directions": 6,
+  "status": "ok"
+}
