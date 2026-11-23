@@ -921,6 +921,6 @@
     "90"
   ],
   "source_file": "charities.csv",
-  "generated_utc": "2026-11-16T13:41:01.641836+00:00",
+  "generated_utc": "2026-11-23T15:59:50.093786+00:00",
   "notes": "Income/expenditure are only populated when supplied in input; this import does not verify their provenance."
 }
